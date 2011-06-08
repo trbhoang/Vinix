@@ -19,7 +19,8 @@
 # the "wx" display library.
 #=======================================================================
 #config_interface: textconfig
-config_interface: wx
+#config_interface: win32config
+#config_interface: wx
 
 #=======================================================================
 # DISPLAY_LIBRARY
@@ -33,9 +34,15 @@ config_interface: wx
 #
 # The choices are: 
 #   x              use X windows interface, cross platform
+#   win32          use native win32 libraries
+#   carbon         use Carbon library (for MacOS X)
+#   beos           use native BeOS libraries
+#   macintosh      use MacOS pre-10
+#   amigaos        use native AmigaOS libraries
 #   sdl            use SDL library, cross platform
 #   svga           use SVGALIB library for Linux, allows graphics without X11
 #   term           text only, uses curses/ncurses library, cross platform
+#   rfb            provides an interface to AT&T's VNC viewer, cross platform
 #   wx             use wxWidgets library, cross platform
 #   nogui          no display at all
 #
@@ -46,10 +53,16 @@ config_interface: wx
 # Some display libraries now support specific option to control their
 # behaviour. See the examples below for currently supported options.
 #=======================================================================
+#display_library: amigaos
+#display_library: beos
+#display_library: carbon
+#display_library: macintosh
 #display_library: nogui
+#display_library: rfb, options="timeout=60" # time to wait for client
 #display_library: sdl, options="fullscreen" # startup in fullscreen mode
 #display_library: term
-display_library: wx
+#display_library: win32, options="gui_debug" # use Win32 debugger gui
+#display_library: wx
 #display_library: x, options="hideIPS" # disable IPS output in status bar
 #display_library: x, options="gui_debug" # use GTK debugger gui
 
@@ -66,7 +79,7 @@ display_library: wx
 # now supported, but we still recommend to use the BIOS distributed with
 # Bochs. The start address optional, since it can be calculated from image size.
 #=======================================================================
-romimage: file=/usr/share/bochs/BIOS-bochs-latest
+romimage: file=$BXSHARE/BIOS-bochs-latest 
 #romimage: file=bios/seabios-0.5.1.bin
 #romimage: file=mybios.bin, address=0xfff80000 # 512k at memory top
 
@@ -162,6 +175,18 @@ cpu: count=1, ips=50000000, reset_on_triple_fault=1, ignore_bad_msrs=1, msrs="ms
 #  Enable 1G page size support in long mode.
 #  This option exists only if Bochs compiled with x86-64 support.
 #
+#  PCID:
+#  Enable Process-Context Identifiers (PCID) support in long mode.
+#  This option exists only if Bochs compiled with x86-64 support.
+#
+#  FSGSBASE:
+#  Enable GS/GS BASE access instructions support in long mode.
+#  This option exists only if Bochs compiled with x86-64 support.
+#
+#  MWAIT:
+#  Select MONITOR/MWAIT instructions support.
+#  This option exists only if Bochs compiled with --enable-monitor-mwait.
+#
 #  MWAIT_IS_NOP:
 #  When this option is enabled MWAIT will not put the CPU into a sleep state.
 #  This option exists only if Bochs compiled with --enable-monitor-mwait.
@@ -174,11 +199,16 @@ cpu: count=1, ips=50000000, reset_on_triple_fault=1, ignore_bad_msrs=1, msrs="ms
 #  Set the CPUID vendor string returned by CPUID(0x80000002 .. 0x80000004).  
 #  This should be at most a forty-eight-character ASCII string.  
 #
+#  STEPPING:
+#  Set stepping information returned by CPUID. Default stepping value is 3.
+#
 #  CPUID_LIMIT_WINNT:
 #  Determine whether to limit maximum CPUID function to 3. This mode is
 #  required to workaround WinNT installation and boot issues.
 #=======================================================================
-cpuid: mmx=1, sep=1, sse=sse4_2, xapic=1, aes=1, movbe=1, xsave=1, cpuid_limit_winnt=0
+cpuid: mmx=1, sep=1, sse=sse4_2, xapic=1, aes=1, movbe=1, xsave=1
+cpuid: stepping=5
+cpuid: cpuid_limit_winnt=0
 
 #=======================================================================
 # MEMORY
@@ -224,8 +254,9 @@ memory: guest=512, host=256
 # VGAROMIMAGE
 # You now need to load a VGA ROM BIOS into C0000.
 #=======================================================================
-vgaromimage: file=/usr/share/vgabios/vgabios.bin
-#vgaromimage: file=/usr/share/vgabios/vgabios.debug.bin
+#vgaromimage: file=bios/VGABIOS-elpin-2.40
+vgaromimage: file=$BXSHARE/VGABIOS-lgpl-latest
+#vgaromimage: file=bios/VGABIOS-lgpl-latest-cirrus
 
 #=======================================================================
 # VGA:
@@ -252,6 +283,7 @@ vga: extension=vbe
 #   floppya: 180k=path, status=inserted   (180K  5.25" media)
 #   floppya: 160k=path, status=inserted   (160K  5.25" media)
 #   floppya: image=path, status=inserted  (guess media type from image size)
+#   floppya: 1_44=vvfat:path, status=inserted  (use directory as VFAT media)
 #   floppya: type=1_44                    (1.44M 3.5" floppy drive, no media)
 #
 # The path should be the name of a disk image file.  On Unix, you can use a raw
@@ -260,14 +292,16 @@ vga: extension=vbe
 # only. In that case the size must match one of the supported types.
 # The parameter 'type' can be used to enable the floppy drive without media
 # and status specified. Usually the drive type is set up based on the media type.
+# The optional parameter 'write_protected' can be used to control the media
+# write protect switch. By default it is turned off.
 #=======================================================================
 #floppya: 1_44=/dev/fd0, status=inserted
-floppya: 1_44=kernel, status=inserted
+floppya: 1_44=kernel.img, status=inserted
 #floppya: image=../1.44, status=inserted
 #floppya: 1_44=/dev/fd0H1440, status=inserted
 #floppya: 1_2=../1_2, status=inserted
 #floppya: 1_44=a:, status=inserted
-#floppya: 1_44=a.img, status=inserted
+#floppya: 1_44=a.img, status=inserted, write_protected=1
 #floppya: 1_44=/dev/rfd0a, status=inserted
 
 #=======================================================================
@@ -305,8 +339,8 @@ ata3: enabled=0, ioaddr1=0x168, ioaddr2=0x360, irq=9
 # This defines the type and characteristics of all attached ata devices:
 #   type=       type of attached device [disk|cdrom] 
 #   mode=       only valid for disks [flat|concat|external|dll|sparse|vmware3]
-#   mode=       only valid for disks [undoable|growing|volatile]
-#   path=       path of the image
+#   mode=       only valid for disks [undoable|growing|volatile|vvfat]
+#   path=       path of the image / directory
 #   cylinders=  only valid for disks
 #   heads=      only valid for disks
 #   spt=        only valid for disks
@@ -314,7 +348,7 @@ ata3: enabled=0, ioaddr1=0x168, ioaddr2=0x360, irq=9
 #   biosdetect= type of biosdetection [none|auto], only for disks on ata0 [cmos]
 #   translation=type of translation of the bios, only for disks [none|lba|large|rechs|auto]
 #   model=      string returned by identify device command
-#   journal=    optional filename of the redolog for undoable and volatile disks
+#   journal=    optional filename of the redolog for undoable, volatile and vvfat disks
 #
 # Point this at a hard disk image file, cdrom iso file, or physical cdrom
 # device.  To create a hard disk image, try running bximage.  It will help you
@@ -349,10 +383,14 @@ ata3: enabled=0, ioaddr1=0x168, ioaddr2=0x360, irq=9
 #   ata3-master: type=disk, mode=flat, path=483M.sample, cylinders=1024, heads=15, spt=63
 #   ata3-slave:  type=cdrom, path=iso.sample, status=inserted
 #=======================================================================
-#ata0-master: type=disk, mode=flat, path="d.sample"
-#ata0-master: type=disk, mode=flat, path="$HOME/.bochs/guest.hd0", cylinders=#cylinders#, heads=16, spt=63
+ata0-master: type=disk, mode=flat, path="30M.sample"
+#ata0-master: type=disk, mode=flat, path="30M.sample", cylinders=615, heads=6, spt=17
 #ata0-master: type=disk, mode=flat, path="c.img", cylinders=0 # autodetect
-ata0-slave: type=cdrom, path=/dev/cdrom, status=inserted
+#ata0-slave: type=disk, mode=vvfat, path=/bochs/images/vvfat, journal=vvfat.redolog
+#ata0-slave: type=cdrom, path=D:, status=inserted
+#ata0-slave: type=cdrom, path=/dev/cdrom, status=inserted
+#ata0-slave: type=cdrom, path="drive", status=inserted
+#ata0-slave: type=cdrom, path=/dev/rcd0d, status=inserted 
 
 #=======================================================================
 # BOOT:
@@ -365,9 +403,8 @@ ata0-slave: type=cdrom, path=/dev/cdrom, status=inserted
 #   boot: network, disk
 #   boot: cdrom, floppy, disk
 #=======================================================================
-#boot: floppy
-#boot: disk
 boot: floppy
+#boot: disk
 
 #=======================================================================
 # CLOCK:
@@ -428,9 +465,8 @@ floppy_bootsig_check: disabled=0
 #   log: ./bochs.out
 #   log: /dev/tty
 #=======================================================================
-log: /dev/stdout
 #log: /dev/null
-#log: /tmp/bochsout.txt
+log: bochsout.txt
 
 #=======================================================================
 # LOGPREFIX:
@@ -522,7 +558,7 @@ debugger_log: -
 #   com4: enabled=1, mode=pipe-client, dev=\\.\pipe\mypipe
 #   com4: enabled=1, mode=pipe-server, dev=\\.\pipe\mypipe
 #=======================================================================
-com1: enabled=1, mode=term, dev=/dev/ttyS0
+#com1: enabled=1, mode=term, dev=/dev/ttyp9
 
 
 #=======================================================================
@@ -538,7 +574,7 @@ com1: enabled=1, mode=term, dev=/dev/ttyS0
 #   parport2: enabled=1, file="/dev/lp0"
 #   parport1: enabled=0
 #=======================================================================
-parport1: enabled=1, file="/dev/lp0"
+parport1: enabled=1, file="parport.out"
 
 #=======================================================================
 # SB16:
@@ -576,7 +612,7 @@ parport1: enabled=1, file="/dev/lp0"
 #   sb16: midimode=1, midi="", wavemode=1, wave=""           # win32
 #   sb16: midimode=1, midi=alsa:128:0, wavemode=1, wave=alsa # Linux with ALSA
 #=======================================================================
-sb16: midimode=1, midi=/dev/midi00, wavemode=1, wave=/dev/dsp, loglevel=2, log=/dev/stdout, dmatimer=600000
+#sb16: midimode=1, midi=/dev/midi00, wavemode=1, wave=/dev/dsp, loglevel=2, log=sb16.log, dmatimer=600000
 
 #=======================================================================
 # VGA_UPDATE_INTERVAL:
@@ -622,23 +658,34 @@ keyboard_paste_delay: 100000
 
 #=======================================================================
 # MOUSE:
-# The Bochs gui creates mouse "events" unless the 'enabled' option is
-# set to 0. The hardware emulation itself is not disabled by this.
-# Unless you have a particular reason for enabling the mouse by default,
-# it is recommended that you leave it off. You can also toggle the mouse
-# usage at runtime (control key + middle mouse button on X11, SDL,
-# wxWidgets and Win32).
-# With the mouse type option you can select the type of mouse to emulate.
-# The default value is 'ps2'. The other choices are 'imps2' (wheel mouse
-# on PS/2), 'serial', 'serial_wheel' and 'serial_msys' (one com port requires
-# setting 'mode=mouse'). To connect a mouse to an USB port, see the 'usb_uhci'
-# or 'usb_ohci' option (requires PCI and USB support).
+# This defines parameters for the emulated mouse type, the initial status
+# of the mouse capture and the runtime method to toggle it.
+#
+#  TYPE:
+#  With the mouse type option you can select the type of mouse to emulate.
+#  The default value is 'ps2'. The other choices are 'imps2' (wheel mouse
+#  on PS/2), 'serial', 'serial_wheel' and 'serial_msys' (one com port requires
+#  setting 'mode=mouse'). To connect a mouse to an USB port, see the 'usb_uhci'
+#  or 'usb_ohci' option (requires PCI and USB support).
+#
+#  ENABLED:
+#  The Bochs gui creates mouse "events" unless the 'enabled' option is
+#  set to 0. The hardware emulation itself is not disabled by this.
+#  Unless you have a particular reason for enabling the mouse by default,
+#  it is recommended that you leave it off. You can also toggle the mouse
+#  usage at runtime (RFB, SDL, Win32, wxWidgets and X11 - see below).
+#
+#  TOGGLE:
+#  The default method to toggle the mouse capture at runtime is to press the
+#  CTRL key and the middle mouse button ('ctrl+mbutton'). This option allows
+#  to change the method to 'ctrl+f10' (like DOSBox), 'ctrl+alt' (like QEMU)
+#  or 'f12' (replaces win32 'legacyF12' option).
 #
 # Examples:
 #   mouse: enabled=1
-#   mouse: enabled=1, type=imps2
-#   mouse: enabled=1, type=serial
-#   mouse: enabled=0
+#   mouse: type=imps2, enabled=1
+#   mouse: type=serial, enabled=1
+#   mouse: enabled=0, toggle=ctrl+f10
 #=======================================================================
 mouse: enabled=0
 
@@ -654,6 +701,18 @@ mouse: enabled=0
 #   private_colormap: enabled=0
 #=======================================================================
 private_colormap: enabled=0
+
+#=======================================================================
+# fullscreen: ONLY IMPLEMENTED ON AMIGA
+#             Request that Bochs occupy the entire screen instead of a 
+#             window.
+#
+# Examples:
+#   fullscreen: enabled=0
+#   fullscreen: enabled=1
+#=======================================================================
+#fullscreen: enabled=0
+#screenmode: name="sample"
 
 #=======================================================================
 # ne2k: NE2000 compatible ethernet adapter
@@ -696,7 +755,10 @@ private_colormap: enabled=0
 #         overwrite files.
 #
 #=======================================================================
+# ne2k: ioaddr=0x300, irq=9, mac=fe:fd:00:00:00:01, ethmod=fbsd, ethdev=en0 #macosx
+# ne2k: ioaddr=0x300, irq=9, mac=b0:c4:20:00:00:00, ethmod=fbsd, ethdev=xl0
 # ne2k: ioaddr=0x300, irq=9, mac=b0:c4:20:00:00:00, ethmod=linux, ethdev=eth0
+# ne2k: ioaddr=0x300, irq=9, mac=b0:c4:20:00:00:01, ethmod=win32, ethdev=MYCARD
 # ne2k: ioaddr=0x300, irq=9, mac=fe:fd:00:00:00:01, ethmod=tap, ethdev=tap0
 # ne2k: ioaddr=0x300, irq=9, mac=fe:fd:00:00:00:01, ethmod=tuntap, ethdev=/dev/net/tun0, script=./tunconfig
 # ne2k: ioaddr=0x300, irq=9, mac=b0:c4:20:00:00:01, ethmod=null, ethdev=eth0
@@ -724,7 +786,7 @@ private_colormap: enabled=0
 # Examples:
 #   keyboard_mapping: enabled=1, map=gui/keymaps/x11-pc-de.map
 #=======================================================================
-#keyboard_mapping: enabled=0, map=/usr/share/bochs/keymaps/x11-pc-de.map
+keyboard_mapping: enabled=0, map=
 
 #=======================================================================
 # KEYBOARD_TYPE:
@@ -769,19 +831,27 @@ i440fxsupport: enabled=1
 #=======================================================================
 # USB_UHCI:
 # This option controls the presence of the USB root hub which is a part
-# of the i440FX PCI chipset. With the portX option you can connect devices
+# of the i440FX PCI chipset. With the portX parameter you can connect devices
 # to the hub (currently supported: 'mouse', 'tablet', 'keypad', 'disk', 'cdrom'
 # 'hub' and 'printer').
+#
+# The optionsX parameter can be used to assign specific options to the device
+# connected to the corresponding USB port. Currently this feature is only used
+# to set the speed reported by device and by the 'disk' device to specify
+# an alternative redolog file of some image modes.
 #
 # If you connect the mouse or tablet to one of the ports, Bochs forwards the
 # mouse movement data to the USB device instead of the selected mouse type.
 # When connecting the keypad to one of the ports, Bochs forwards the input of
 # the numeric keypad to the USB device instead of the PS/2 keyboard.
 #
-# To connect a flat image as an USB hardisk you can use the 'disk' device with
-# the path to the image separated with a colon (see below). To emulate an USB
-# cdrom you can use the 'cdrom' device name and the path to an ISO image or raw
-# device name also separated with a colon.
+# To connect a 'flat' mode image as an USB hardisk you can use the 'disk' device
+# with the path to the image separated with a colon. To use other disk image modes
+# similar to ATA disks the syntax 'disk:mode:filename' must be used (see below).
+#
+# To emulate an USB cdrom you can use the 'cdrom' device name and the path to
+# an ISO image or raw device name also separated with a colon. An option to
+# insert/eject media is available in the runtime configuration.
 #
 # The device name 'hub' connects an external hub with max. 8 ports (default: 4)
 # to the root hub. To specify the number of ports you have to add the value
@@ -794,8 +864,10 @@ i440fxsupport: enabled=1
 # overwrite the file instead, asking user first.
 #=======================================================================
 #usb_uhci: enabled=1
-#usb_uhci: enabled=1, port1=mouse, port2=disk:usbdisk.img
-#usb_uhci: enabled=1, port1=hub:7, port2=cdrom:image.iso
+#usb_uhci: enabled=1, port1=mouse, port2=disk:usbstick.img
+#usb_uhci: enabled=1, port1=hub:7, port2=disk:growing:usbdisk.img
+#usb_uhci: enabled=1, port2=disk:undoable:usbdisk.img, options1=journal:redo.log
+#usb_uhci: enabled=1, port1=printer:printdata.bin, port2=cdrom:image.iso
 
 #=======================================================================
 # USB_OHCI:
@@ -893,3 +965,26 @@ i440fxsupport: enabled=1
 # See the example in the Bochs sources how to write a plugin device.
 #=======================================================================
 #user_plugin: name=testdev
+
+#=======================================================================
+# for Macintosh, use the style of pathnames in the following
+# examples.
+#
+# vgaromimage: :bios:VGABIOS-elpin-2.40
+# romimage: file=:bios:BIOS-bochs-latest, address=0xf0000
+# floppya: 1_44=[fd:], status=inserted
+#=======================================================================
+
+#=======================================================================
+# MEGS
+# Set the number of Megabytes of physical memory you want to emulate. 
+# The default is 32MB, most OS's won't need more than that.
+# The maximum amount of memory supported is 2048Mb.
+# The 'MEGS' option is deprecated. Use 'MEMORY' option instead.
+#=======================================================================
+#megs: 256
+#megs: 128
+#megs: 64
+#megs: 32
+#megs: 16
+#megs: 8
