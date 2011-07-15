@@ -47,16 +47,7 @@ moving:
               movsw  # move (ds:si) to (es:di)
 
               // do long jump to new segment now at 0x90000
-              ljmp $0x9000, $0x3f  # !!!!!! this may not correct (what is CS at this movement?)
-              
-go:
-              // set code segment, data seg, stack seg,.. point to new area
-              movw $0x9000, %ax
-              movw %ax, %cs  
-              movw %ax, %ds
-              movw %ax, %es
-              movw %ax, %ss
-              movw $0x1000, %sp  # arbitrary value >> 512
+              ljmp $0x9000, $kernel_exit  # !!!!!! this may not correct (what is CS at this movement?)
               
               // Here we just fall into the infinite loop
 kernel_exit:
@@ -65,5 +56,5 @@ kernel_exit:
 
 hello_msg:
               .asciz "Hello world!!!" /* Zero-padded string. */
-.space 429, 0 /* padding remaining bytes with 0s */
+.space 443, 0 /* padding remaining bytes with 0s */
 .word 0xaa55  /* The boot signature for PC BIOS */

@@ -1,3 +1,7 @@
 *.o
 *.img
+kernel*
+parport.out
+bochsout.txt
+
 
