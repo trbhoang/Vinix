@@ -13,7 +13,7 @@ LD = ld
 
 BOOTDIR  = boot
 BUILDDIR = tmp
-BOOT_FILES = boot.S
+BOOT_FILES = boot.o
 BOOT_INCLUDES = boot
 
 all : $(BUILDDIR)/Image
