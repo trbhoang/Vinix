@@ -16,16 +16,20 @@ BUILDDIR = tmp
 BOOT_FILES = sample_boot1.o
 BOOT_INCLUDES = boot
 
-all : $(BUILDDIR)/boot.img
+all : $(BUILDDIR)/kernel.img
 
 # build assembly code
 %.o : %.S
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 # link boot object file
-$(BUILDDIR)/boot.img : $(BOOT_FILES:%=$(BOOTDIR)/%)
+$(BUILDDIR)/kernel.img : $(BOOT_FILES:%=$(BOOTDIR)/%)
 	$(CC) $(CFLAGS) $(LDFLAGS),-Ttext,$(BOOT_START_ADDR) -o $@ $^
+
+install : $(BUILDDIR)/kernel.img
+	bochs
 
 .PHONY : clean
 clean :
-	-rm $(BUILDDIR)/boot.img
+	-rm $(BUILDDIR)/kernel.img
+	-rm $(BOOTDIR)/*.o
