@@ -76,6 +76,9 @@ ldata:	.long	0xdeadbeef	# Define long data.
 	.p2align 3		# Eight byte align the following data.
 adata:	.long	0x1337c0de
 
+        .org 510
+boot_flag: .word 0xaa55
+
 	# Move the location counter to the 512 byte mark, which is the
 	# start of the second sector on disk, which should be loaded to
 	# address 0x1200 in memory.  Once linked, two_str = 0x1200.
