@@ -1,6 +1,7 @@
 /*
-* Boot loader 
-* Hoang Tran <trbhoang@gmail.com>
+* @file    boot.S
+* @brief   Boot loader 
+* @author  Hoang Tran <trbhoang@gmail.com>
 */
 
 	.file	"boot.S"
