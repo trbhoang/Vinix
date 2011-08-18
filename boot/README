@@ -1,0 +1,9 @@
+
+How boot code works?
+===
+
+1. After compiled, boot.S is place at boot sector of floppy disk which is read and loaded into memory at 0x7c00 by BIOS code
+
+2. boot.S is in charged of loading boot0.S into a certain place in memory and execute it 
+
+3. At this phase, boot0.S is just a simple program that prints out a message. We can replace it by a kernel in next phase. 
