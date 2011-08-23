@@ -11,12 +11,16 @@
    - ref:
      + man mkdosfs
      + http://wiki.osdev.org/Loopback_Device
+     + http://www.dedoimedo.com/computers/grub.html (how to copy stage1 & stage2 boot loader to floppy.img)
 
    ===
    - create the floppy.img file using dd:
      $ dd if=/dev/zero of=floppy.img bs=512 count=2880
    - format floppy.img as FAT12
      $ sudo mkdosfs -F12 floppy.img
+   - copy stage1 & stage2 bootloader onto floppy.img
+     $ dd if=stage1 of=floppy.img count=1
+     $ dd if=stage2 of=floppy.img seek=1
      
    
 2. Build a 2-stage bootloader
