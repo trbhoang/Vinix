@@ -18,16 +18,17 @@
      $ dd if=/dev/zero of=floppy.img bs=512 count=2880
    - format floppy.img as FAT12
      $ sudo mkdosfs -F12 floppy.img
-   - copy stage1 & stage2 bootloader onto floppy.img
+
+2. Copy 2-stage bootloader to correct places on floppy.img
      $ dd if=stage1 of=floppy.img count=1
      $ dd if=stage2 of=floppy.img seek=1
-     
    
-2. Build a 2-stage bootloader
+3. Build a 2-stage bootloader
    - stage 1 binary is recorded on boot sector (first 512 bytes) of floppy image
    - stage 2 binary is recorded as a file on floppy image and is loaded into memory by stage 1
    - kernel will then be loaded by stage 2
-3. Write the kernel 
+   
+4. Write the kernel 
 
 
 = TOOLS
