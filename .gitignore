@@ -3,4 +3,6 @@
 kernel*
 parport.out
 bochsout.txt
+boot/boot1
+boot/boot2
 tmp/*
