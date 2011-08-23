@@ -26,6 +26,8 @@ all : $(BUILDDIR)/Image
 $(BUILDDIR)/Image : $(BOOT_FILES:%=$(BOOTDIR)/%)
 	$(CC) $(CFLAGS) $(LDFLAGS),-Ttext,$(BOOT_START_ADDR) -o $@ $^
 
+$(BUILDDIR)/boot0 : $(BOOTDIR)/boot0
+
 install : $(BUILDDIR)/Image
 	bochs
 

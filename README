@@ -1,0 +1,36 @@
+= TODO
+
+1. Learn how to create a floppy image file formatted as FAT12 (or whatever file system) on Linux
+   - the boot loader & kernel will all stay on this floppy image
+
+   ===
+   - tools:
+     + mkdosfs
+     + dd: Linux command for copy and convert a file 
+     
+   - ref:
+     + man mkdosfs
+     + http://wiki.osdev.org/Loopback_Device
+
+   ===
+   - create the floppy.img file using dd:
+     $ dd if=/dev/zero of=floppy.img bs=512 count=2880
+   - format floppy.img as FAT12
+     $ sudo mkdosfs -F12 floppy.img
+     
+   
+2. Build a 2-stage bootloader
+   - stage 1 binary is recorded on boot sector (first 512 bytes) of floppy image
+   - stage 2 binary is recorded as a file on floppy image and is loaded into memory by stage 1
+   - kernel will then be loaded by stage 2
+3. Write the kernel 
+
+
+= TOOLS
+  dd
+  hexdump
+  od
+  mkdosfs
+  ld
+  gcc
+  
