@@ -1,35 +1,52 @@
 /*
 * @file    boot.S
-* @brief   Boot loader 
+* @brief   second-stage bootloader
 * @author  Hoang Tran <trbhoang@gmail.com>
 */
 
-	.file	"boot0.S"
+	.file	"boot2.S"
 	.text
 
-	.code16
+	.code16                 # we are still in real mode
 	.global	_start
+
+        
+# we are loaded at linear address 0x10000
 _start:
-        movw $str, %si
-        call print_str
+        jmp     main
 
-/* Print string from DS:SI until NULL character is met */
-print_str:
-	pusha			# Saves registers.
-        movb    $0xE, %ah
-        xorb    %bh, %bh
-        movb    $0x7, %bl
-next_char:
-        lodsb
-        orb     %al, %al
-        jz      return_print_str
+        
+/*****************************************
+*  Print a string
+*  DS:SI -> null terminated string 
+*****************************************/
+print:
+        lodsb                   # load next byte from string to AL
+        orb     %al, %al        # does AL = 0?
+        jz      end_of_str      # yes, reach the end of the string
+        movb    $0xE, %ah       # no, print the character
         int     $0x10
-        jmp     next_char
-return_print_str:
-        popa 
-        ret
+        jmp     print           # repeat until reach null character 
+end_of_str:
+        ret                     # we are done, so return 
+        
 
-/* data */        
-str:
+/*****************************************
+* Second Stage Bootloader Entry Point 
+*****************************************/        
+main:
+        cli                     # clear interrupts
+        push    %cs             # to insure DS=CS
+        pop     %ds
+        movw    $msg, %si       # print message
+        call    print
+
+        cli
+        hlt
+        
+/*****************************************
+* Data
+*****************************************/        
+msg:
         .asciz	"\r\nYou are in second stage!\r\n"
 

@@ -8,7 +8,7 @@ CFLAGS  = -Wall -Werror -nostdinc
 LDFLAGS = -nostdlib -Wl,-N,--oformat,binary
 
 STAGE1_START_ADDR = 0x7c00
-STAGE2_START_ADDR = 0x1000
+STAGE2_START_ADDR = 0x0
 
 IMAGE_DIR = ../Image
 IMAGE_FILE = $(IMAGE_DIR)/floppy.img
@@ -16,10 +16,10 @@ IMAGE_FILE = $(IMAGE_DIR)/floppy.img
 all: boot1 boot2 image
 
 boot1: boot1.o
-	$(CC) $(CFLAGS) $(LDFLAGS),-Ttext,$(STAGE1_START_ADDR) -o $@ $^
+	$(CC) $(CFLAGS) $(LDFLAGS) -Ttext=$(STAGE1_START_ADDR) -o $@ $^
 
 boot2: boot2.o
-	$(CC) $(CFLAGS) $(LDFLAGS),-Ttext,$(STAGE2_START_ADDR) -o $@ $^
+	$(CC) $(CFLAGS) $(LDFLAGS) -Ttext=$(STAGE2_START_ADDR) -o $@ $^
 
 %.o: %.S
 	$(CC) $(CFLAGS) -c -o $@ $<

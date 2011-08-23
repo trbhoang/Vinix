@@ -36,6 +36,7 @@
 = TOOLS
   dd
   hexdump
+  objdump
   od
   mkdosfs
   ld
