@@ -11,7 +11,7 @@
 	.global	_start
 
         
-                                # we are loaded at linear address 0x10000 by first-stage bootloader
+                                # we are loaded at physical address 0x10000 by first-stage bootloader
 _start:
         jmp     main
 

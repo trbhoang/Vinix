@@ -11,7 +11,7 @@
 	.global	_start
         
 
-_start:                         # we are loaded at linear address 0x7c00 by BIOS
+_start:                         # we are loaded at physical address 0x7c00 by BIOS
         jmp     loader
 
 
