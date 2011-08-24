@@ -1,28 +1,30 @@
 /*
-* @file    boot.S
-* @brief   Boot loader 
+* @file    boot1.S
+* @brief   first-stage bootloader 
 * @author  Hoang Tran <trbhoang@gmail.com>
 */
 
 	.file	"boot1.S"
 	.text
 
-	.code16			# Emit 16-bit code for Real Mode.
+	.code16			# we are in Real Mode.
 	.global	_start
-_start:
+        
+
+_start:                         # we are loaded at linear address 0x7c00 by BIOS
         jmp     loader
 
 
 /*****************************************
-*  Print a string
-*  DS:SI -> null terminated string 
+* Print a string
+* DS:SI -> null terminated string 
 *****************************************/
 print:
         lodsb                   # load next byte from string to AL
         orb     %al, %al        # does AL = 0?
         jz      end_of_str      # yes, reach the end of the string
         movb    $0xE, %ah       # no, print the character
-        int     $0x10
+        int     $0x10           # BIOS 10h function
         jmp     print           # repeat until reach null character 
 end_of_str:
         ret                     # we are done, so return 
@@ -32,51 +34,50 @@ end_of_str:
 * Bootloader Entry Point 
 *****************************************/        
 loader:
-        xorw    %ax, %ax
-        movw    %ax, %ds
-        movw    %ax, %es
+        xorw    %ax, %ax                # clear AX
+        movw    %ax, %ds                # this code was loaded at 0x7c00 (physical address) by BIOS and originated at 0x7c00 (offset) by linker, 
+        movw    %ax, %es                # hence the data segments should be 0x0 so that it points to correct physical address (0x0:0x7c00 -> 0x7c00)
 
-        movw    $welcome_msg, %si       # print message 
+        movw    $welcome_msg, %si               # print a welcome message 
         call    print
         
-        movw    $stage2_msg, %si        # start loading stage 2
+        movw    $start_loading_msg, %si         # print a message that says loading stage 2
         call    print
         
 reset_fd:
         movb    $0, %ah         # reset floppy disk function
-        movb    $0, %dl         # drive 0 is floppy drive
-        int     $0x13
+        movb    $0, %dl         # drive number: 0 is floppy drive
+        int     $0x13           # BIOS 13h function
         jc      reset_fd        # try again if carry flag (CF) is set (there was an error)
 
-        movw    $0x1000, %ax    # we are going to read sector into address 0x1000:0
-        movw    %ax, %es
-        xorw    %bx, %bx
-
+        movw    $0x1000, %ax    # we are going to read second sector into address ES:BX (0x1000:0 -> 0x10000)
+        movw    %ax, %es        # ES = 0x1000
+        xorw    %bx, %bx        # clear BX
 read_fd:    
         movb    $0x02, %ah      # read floppy sector function
         movb    $1, %al         # read one sector
-        movb    $0, %ch         # we are reading the second sector past us, so it's still on track 1 (cylinder 1)
-        movb    $2, %cl         # sector to read (the second sector)
-        movb    $0, %dh         # head number
+        movb    $0, %ch         # we are reading the second sector past us, so it's still on track 1 (cylinder 1, note: tracks are numbered from 0)
+        movb    $2, %cl         # sector to read (the second sector, note: sectors are numbered from 1)
+        movb    $0, %dh         # head number (floppy disk has only one 'plane', so two 'faces' or 'heads': head 0, head 1), the second sector is on head 0
         movb    $0, %dl         # drive number (0 is floppy drive)
-        int     $0x13
-        jc      read_fd
+        int     $0x13           # BIOS 13h function
+        jc      read_fd         # try again if error 
 
-        movw    $complete_stage2_msg, %si
+        movw    $complete_loading_msg, %si      # print a message that says stage 2 has been loaded 
         call    print
-        ljmp    $0x1000, $0     # jump to loaded code
+        ljmp    $0x1000, $0                     # jump to loaded code
         
 
 /*****************************************
 * Data
 *****************************************/        
 welcome_msg:
-        .asciz	"\r\nWelcome to My Operating System!\r\n"
-stage2_msg:
-        .asciz  "Loading stage 2...\r\n"
-complete_stage2_msg:
-        .asciz  "Complete loading stage 2. Start executing second stage...\r\n"
+        .asciz	"\r\n===== Welcome to Vinix Operating System! =====\r\n"
+start_loading_msg:
+        .asciz  "\r\nLoading stage 2...\r\n"
+complete_loading_msg:
+        .asciz  "\r\nComplete loading stage 2. Start executing the second stage...\r\n"
+
         
 .org 510
-.word 0xaa55    # boot signature
-
+.word 0xaa55    # boot sector signature

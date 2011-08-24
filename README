@@ -46,7 +46,8 @@
 = NOTES
 
 == Make
-   - rule: files
+   - rule
+     target: prerequisites
            commands
    - make with no arguments executes the first rule in the file
    - there must be a tab at the beginning of any commands
