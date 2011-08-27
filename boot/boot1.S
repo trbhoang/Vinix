@@ -14,22 +14,10 @@
 _start:                         # we are loaded at physical address 0x7c00 by BIOS
         jmp     loader
 
-
-/*****************************************
-* Print a string
-* DS:SI -> null terminated string 
-*****************************************/
-print:
-        lodsb                   # load next byte from string to AL
-        orb     %al, %al        # does AL = 0?
-        jz      end_of_str      # yes, reach the end of the string
-        movb    $0xE, %ah       # no, print the character
-        int     $0x10           # BIOS 10h function
-        jmp     print           # repeat until reach null character 
-end_of_str:
-        ret                     # we are done, so return 
         
+#include "stdio.h"              /* to include IO functions */
 
+        
 /*****************************************
 * Bootloader Entry Point 
 *****************************************/        
