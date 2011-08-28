@@ -44,44 +44,4 @@ main:
 *****************************************/        
 msg:
         .asciz	"\r\nYou are in the second stage!\r\n"
-
-
         
-/***************************************************************
-* Global Descriptor Table (GDT)
-* Each entry is a descriptor
-* The first one must be a null descriptor
-* This GDT contains three 8-byte descriptors: null, code, data
-****************************************************************/
-        
-        
-/*****************************************
-* Null descriptor
-* which is filled with eight 0 bytes 
-*****************************************/        
-.long   0       # four 0 bytes
-.long   0       # four 0 bytes
-
-
-/*****************************************
-* Code Descriptor 
-* right after null descriptor 
-*****************************************/        
-.int    0xffff          # limit low
-.int    0               # base low
-.byte   0               # base middle
-.byte   0b10011010      # access
-.byte   0b11001111      # granularity
-.byte   0               # base high
-        
-
-/*****************************************
-* Data Descriptor 
-* right after null descriptor 
-*****************************************/        
-.int    0xffff          # limit low (same as code segment descriptor)
-.int    0               # base low
-.byte   0               # base middle
-.byte   0b10010010      # access
-.byte   0b11001111      # granularity
-.byte   0               # base high

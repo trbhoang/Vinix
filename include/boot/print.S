@@ -1,11 +1,11 @@
 /**
- * @file   boot.h
- * @brief  Generally useful bootloader values.
- * @author Mike Kasick <mkasick@andrew.cmu.edu>
+ * @file   print.S
+ * @brief  function to print a message 
+ * @author Hoang Tran <trbhoang@gmail.com>
  */
 
-#ifndef STDIO_H
-#define STDIO_H
+#ifndef PRINT_S
+#define PRINT_S
         
 
 /*****************************************
