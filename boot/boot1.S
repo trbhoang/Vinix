@@ -15,7 +15,7 @@ _start:                         # we are loaded at physical address 0x7c00 by BI
         jmp     loader
 
         
-#include "stdio.h"              /* to include IO functions */
+#include "print.S"              /* to include IO functions */
 
         
 /*****************************************

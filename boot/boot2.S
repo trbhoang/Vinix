@@ -1,6 +1,11 @@
 /*
 * @file    boot2.S
 * @brief   second-stage bootloader
+*          - enable and go into protected mode
+*          - retrieve BIOS information
+*          - load and execute the kernel
+*          - enable the A20 address line for access upto 4G memory
+*          - provide basic interrupt handling 
 * @author  Hoang Tran <trbhoang@gmail.com>
 */
 
@@ -16,7 +21,7 @@ _start:
         jmp     main
 
 
-#include "stdio.h"              /* to include IO functions */
+#include "print.S"              /* to include IO functions */
 
 
 /*****************************************

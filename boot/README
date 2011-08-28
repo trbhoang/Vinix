@@ -7,3 +7,16 @@ How boot code works?
 2. boot1.S is in charged of loading boot2.S into a certain place in memory and execute it 
 
 3. At this phase, boot2.S is just a simple program that prints out a message. We can make it to load a kernel in the future. 
+
+
+Notes
+===
+
+= Global Descriptor Table
+
+  The Global Descriptor Table (GDT) defines the global memory map. It defines what memory can be executed (Code Descriptor),
+  and what area contains data (Data Descriptor).
+
+  For GDT, a "descriptor" is a 8-byte value that describes certain properties for its segment
+  
+  
