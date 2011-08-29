@@ -21,27 +21,65 @@ _start:
         jmp     main
 
 
-#include "print.S"              /* to include IO functions */
+#include "print.S"              /* to include basic IO routines */
+#include "gdt.S"                /* GDT routines */
+
+
+/*****************************************
+* Data
+*****************************************/        
+loading_msg:
+        .asciz	"\r\nPreparing to load operating system...\r\n"
 
 
 /*****************************************
 * Second Stage Bootloader Entry Point 
 *****************************************/        
 main:
-        cli                     # clear interrupts
-        push    %cs             # this stage of bootloader is loaded at a certain place (pointed to by CS) by first-stage,
-        pop     %ds             # and originated at offset 0x0 by linker but code and data are on the same segment,
-                                # so DS must equal to CS so that they reference correct physical addr
-        movw    $msg, %si       # print a message that says we're at the second stage 
+        /* setup segments and stack */
+        cli                             # clear interrupts
+        movw    $0x9000, %ax
+        movw    %ax, %ss
+        movw    $0xffff, %sp
+        push    %cs
+        pop     %ax
+        movw    %ax, %ds
+        movw    %ax, %es
+        sti                             # enable interrupts
+
+        movw    $loading_msg, %si       # to print loading message
         call    print
 
-        cli
-        hlt
+        /* install GDT */
+        call    install_gdt             
+
+        /* go into Protected Mode */
+        cli                             # clear interrupts
+        movl    %cr0, %eax              # to set bit 0 of cr0 register
+        orl     $1, %eax
+        movl    %eax, %cr0
 
         
+        ljmp    $0x08, $stage3          # far jump to update CS
+                                        # remember that we're already in Protected Mode
+                                        # so first operator of ljmp statement is offset (selector) of a certain descriptor in GDT 
+        
+
 /*****************************************
-* Data
+* Entry Point for Stage 3  
 *****************************************/        
-msg:
-        .asciz	"\r\nYou are in the second stage!\r\n"
+.code32                                 # welcome to the 32-bit world!
+stage3:
+        movw    $0x10, %ax              # set data segments to data selector (0x10)
+        movw    %ax, %ds
+        movw    %ax, %ss
+        movw    %ax, %es
+        movl    $0x90000, %esp          # stack begins from 0x90000
+        
+
+/*****************************************
+* Stop execution   
+*****************************************/        
+        cli
+        hlt
         

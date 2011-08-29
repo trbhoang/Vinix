@@ -23,10 +23,7 @@ all: boot1 boot2 image
 boot1: boot1.o
 	$(CC) $(CFLAGS) $(LDFLAGS) -Ttext=$(STAGE1_OFFSET) -o $@ $^		
 
-# link and tie boot2 to offset addr 0x0
-# boot2 makes code and data on the same segment
-# so for data pointing to correct physical addr,
-# the code must set data segments point to code segment at start
+# link and tie boot2 to offset addr 0x1000
 boot2: boot2.o
 	$(CC) $(CFLAGS) $(LDFLAGS) -Ttext=$(STAGE2_OFFSET) -o $@ $^		
 

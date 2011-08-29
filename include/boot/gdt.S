@@ -4,6 +4,8 @@
  * @author Hoang Tran <trbhoang@gmail.com>
  */
 
+#ifndef GDT_S
+#define GDT_S
         
         
 /***************************************************************
@@ -19,13 +21,13 @@
 * Install GDT
 *****************************************/
 install_gdt:    
-        cli             # clear interrupts 
-        pusha           # save registers
-        lgdt    gdtr    # load GDT to GDTR
-        sti             # enable interrupts
-        popa            # restore registers
-        ret             # done
-        
+        cli             	# clear interrupts 
+        pusha           	# save registers
+        lgdt    gdtr_48 	# load GDT to GDTR
+        sti             	# enable interrupts
+        popa            	# restore registers
+        ret             	# done
+
         
 /*****************************************
 * Null descriptor
@@ -39,8 +41,8 @@ start_of_gdt:
 * Code Descriptor 
 * right after null descriptor 
 *****************************************/        
-.int    0xffff          # limit low
-.int    0               # base low
+.short  0xffff          # limit low
+.short  0               # base low
 .byte   0               # base middle
 .byte   0b10011010      # access
 .byte   0b11001111      # granularity
@@ -59,9 +61,9 @@ start_of_gdt:
 .byte   0               # base high
 end_of_gdt:
         
-gdtr:                   # this contains what will be load to GDTR register 
-        .short  end_of_gdt - start_of_gdt - 1           # size of GDT
-        .int    start_of_gdt                            # base of GDT
+gdtr_48:                # this contains what will be load to GDTR register 
+        .short  end_of_gdt - start_of_gdt         # size of GDT (2 bytes)
+        .short  start_of_gdt, 0x1                 # base of GDT (4 bytes) --> become 0x1XXXX
         
 
 #endif
