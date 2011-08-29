@@ -4,6 +4,8 @@
 * @author  Hoang Tran <trbhoang@gmail.com>
 */
 
+#include "boot.h"
+
 	.file	"boot1.S"
 	.text
 
@@ -33,14 +35,14 @@ loader:
         call    print
         
 reset_fd:
-        movb    $0, %ah         # reset floppy disk function
-        movb    $0, %dl         # drive number: 0 is floppy drive
-        int     $0x13           # BIOS 13h function
-        jc      reset_fd        # try again if carry flag (CF) is set (there was an error)
+        movb    $0, %ah         	# reset floppy disk function
+        movb    $0, %dl         	# drive number: 0 is floppy drive
+        int     $0x13           	# BIOS 13h function
+        jc      reset_fd        	# try again if carry flag (CF) is set (there was an error)
 
-        movw    $0x1000, %ax    # we are going to read second sector into address ES:BX (0x1000:0 -> 0x10000)
-        movw    %ax, %es        # ES = 0x1000
-        xorw    %bx, %bx        # clear BX
+        movw    $STAGE2_SEC, %ax        # we are going to read second sector into address ES:BX
+        movw    %ax, %es        	# ES = STAGE2_SEC
+        xorw    %bx, %bx        	# clear BX
 read_fd:    
         movb    $0x02, %ah      # read floppy sector function
         movb    $1, %al         # read one sector
@@ -53,7 +55,7 @@ read_fd:
 
         movw    $complete_loading_msg, %si      # print a message that says stage 2 has been loaded 
         call    print
-        ljmp    $0x1000, $0                     # jump to loaded code
+        ljmp    $STAGE2_SEC, $0                 # jump to loaded code
         
 
 /*****************************************
