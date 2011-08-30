@@ -8,6 +8,6 @@
 #define BOOT_H
 
 
-#define STAGE2_SEC    0x50  /* bootloader stage2 segment */
+#define KERN_SEC    0x1000
 
 #endif

@@ -6,11 +6,10 @@
 
 #include "boot.h"
 
-	.file	"boot1.S"
+	.file	"boot.S"
 	.text
 
 	.code16			# we are in Real Mode.
-        .org    0               # we will set segment registers later
 	.global	_start
         
 
@@ -47,15 +46,15 @@ main:
         movw    $start_loading_msg, %si   
         call    print
 
-        /* load stage2 from second record of floppy disk */
+        /* load kernel from second record of floppy disk */
 reset_fd:
         movb    $0, %ah         	# reset floppy disk function
         movb    $0, %dl         	# drive number: 0 is floppy drive
         int     $0x13           	# BIOS 13h function
         jc      reset_fd        	# try again if carry flag (CF) is set (there was an error)
 
-        movw    $STAGE2_SEC, %ax        # we are going to read second sector into address ES:BX
-        movw    %ax, %es        	# ES = STAGE2_SEC
+        movw    $KERN_SEC, %ax          # we are going to read second sector into address ES:BX
+        movw    %ax, %es        	# ES = KERN_SEC
         xorw    %bx, %bx        	# clear BX
 read_fd:    
         movb    $0x02, %ah      # read floppy sector function
@@ -69,7 +68,7 @@ read_fd:
 
         movw    $complete_loading_msg, %si      # print a message that says stage 2 has been loaded 
         call    print
-        ljmp    $STAGE2_SEC, $0                 # jump to loaded code
+        ljmp    $KERN_SEC, $0                   # jump to loaded code
         
 
 /*****************************************
@@ -78,9 +77,9 @@ read_fd:
 welcome_msg:
         .asciz	"\r\n===== Welcome to Vinix Operating System! =====\r\n"
 start_loading_msg:
-        .asciz  "\r\nLoading stage 2...\r\n"
+        .asciz  "\r\nLoading kernel...\r\n"
 complete_loading_msg:
-        .asciz  "\r\nComplete loading stage 2. Start executing the second stage...\r\n"
+        .asciz  "\r\nStart executing the kernel...\r\n"
 
         
 .org 510
