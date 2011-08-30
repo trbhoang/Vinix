@@ -2,16 +2,13 @@
 # this is makefile to build bootloader
 # Hoang Tran <trbhoang@gmail.com>
 
-STAGE1_ADDR = 0x7c00	# stage1 will be loaded at physical address 0x7c00
-STAGE2_ADDR = 0x500 	# stage2 will be loaded at physical address 0x500
-
 IMAGE_DIR = ../Image
 IMAGE_FILE = $(IMAGE_DIR)/floppy.img
 INC_DIR = ../include/boot
 
 CC = gcc
 CFLAGS  = -Wall -Werror -nostdinc -I $(INC_DIR)
-LDFLAGS = -nostdlib -Wl,-N,--oformat,binary
+LDFLAGS = -nostdlib -Wl,-N,--oformat,binary -Ttext=0x0
 
 
 all: boot1 boot2 image
@@ -21,11 +18,11 @@ all: boot1 boot2 image
 # so to point to correct physical addr, the code must initialize data segments to 0x0 at the beginning
 # 0x0:0x7c00 -> 0x7c00
 boot1: boot1.o
-	$(CC) $(CFLAGS) $(LDFLAGS) -Ttext=$(STAGE1_ADDR) -o $@ $^		
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^		
 
 # link and tie boot2 to offset addr 0x1000
 boot2: boot2.o
-	$(CC) $(CFLAGS) $(LDFLAGS) -Ttext=$(STAGE2_ADDR) -o $@ $^		
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^		
 
 %.o: %.S
 	$(CC) $(CFLAGS) -c -o $@ $<				# compile file of assembly code (.S) to object file (.o)

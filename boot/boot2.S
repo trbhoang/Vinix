@@ -13,10 +13,9 @@
 	.text
 
 	.code16                 # we are still in Real Mode
+        .org    0x500           # we are loaded  0x500 (0x50:0)
 	.global	_start
 
-        
-                                # we are loaded at physical address 0x500 by first-stage bootloader
 _start:
         jmp     main
 
@@ -48,7 +47,8 @@ main:
         movw    $0xffff, %sp
         sti                             # enable interrupts
 
-        movw    $loading_msg, %si       # to print loading message
+        /* print loading message */
+        movw    $loading_msg, %si
         call    print
 
         /* install GDT */

@@ -10,11 +10,12 @@
 	.text
 
 	.code16			# we are in Real Mode.
+        .org    0               # we will set segment registers later
 	.global	_start
         
 
 _start:                         # we are loaded at physical address 0x7c00 by BIOS
-        jmp     loader
+        jmp     main
 
         
 #include "print.S"              /* to include IO functions */
@@ -23,17 +24,30 @@ _start:                         # we are loaded at physical address 0x7c00 by BI
 /*****************************************
 * Bootloader Entry Point 
 *****************************************/        
-loader:
-        xorw    %ax, %ax                # clear AX
-        movw    %ax, %ds                # this code was loaded at 0x7c00 (physical address) by BIOS and originated at 0x7c00 (offset) by linker, 
-        movw    %ax, %es                # hence the data segments should be 0x0 so that it points to correct physical address (0x0:0x7c00 -> 0x7c00)
+main:
+        /* code located at 0000:7c00 */
+        cli                             # disable interrupts
+        movw    $0x07c0, %ax            # setup registers to point to 0x7c00
+        movw    %ax, %ds
+        movw    %ax, %es
+        movw    %ax, %fs
+        movw    %ax, %gs
 
-        movw    $welcome_msg, %si               # print a welcome message 
+        /* setup stack */
+        movw    $0x0, %ax
+        movw    %ax, %ss
+        movw    $0xffff, %sp
+        sti                             # enable interrupts 
+
+        /* print a welcome message */
+        movw    $welcome_msg, %si  
         call    print
-        
-        movw    $start_loading_msg, %si         # print a message that says loading stage 2
+
+        /* print loading message */
+        movw    $start_loading_msg, %si   
         call    print
-        
+
+        /* load stage2 from second record of floppy disk */
 reset_fd:
         movb    $0, %ah         	# reset floppy disk function
         movb    $0, %dl         	# drive number: 0 is floppy drive
