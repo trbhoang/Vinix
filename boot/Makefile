@@ -8,17 +8,25 @@ INC_DIR = ../include/boot
 
 CC = gcc
 CFLAGS  = -Wall -Werror -nostdinc -I $(INC_DIR)
-LDFLAGS = -nostdlib -Wl,-N,--oformat,binary -Ttext=0x0
+LDFLAGS = -nostdlib -Wl,-N,--oformat=binary -Ttext=0x0
 
 
-all: boot head image
+all: boot image
+
+boot: boot.o
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^		
+
 
 # link object file so that it could be ready to load into memory to be executed
 # link and tie boot1 to offset addr 0x7c00 which also the physical addr where BIOS supposes to place it
 # so to point to correct physical addr, the code must initialize data segments to 0x0 at the beginning
 # 0x0:0x7c00 -> 0x7c00
-boot: boot.o
+boot1: boot1.o
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^		
+
+boot2: boot2.o
+	$(CC) $(CFLAGS) -m32 $(LDFLAGS) -o $@ $^		
+
 
 # link and tie boot2 to offset addr 0x1000
 head: head.o
@@ -31,7 +39,9 @@ head: head.o
 image:  
 	dd if=/dev/zero of=$(IMAGE_FILE) bs=512 count=2880	# make floppy image file 
 	dd if=boot of=$(IMAGE_FILE) count=1			# record boot1 at boot sector
-	dd if=head of=$(IMAGE_FILE) seek=1			# record boot2 at second sector (right after boot sector)
+
+# dd if=boot2 of=$(IMAGE_FILE) seek=1
+# record boot2 at second sector (right after boot sector)
 
 clean:
-	rm *.o boot head $(IMAGE_FILE)
+	rm *.o boot $(IMAGE_FILE)

@@ -2,11 +2,18 @@
 How boot code works?
 ===
 
-1. After compiled, boot1.S is placed at boot sector of floppy disk which is read and loaded into memory at 0x7c00 by BIOS code
+1. After compiled, boot1.S is placed at boot sector of floppy disk which is read and loaded into memory at 0x7c00 by BIOS code.
+   Boot1 contains 16-bit code which does the following:
+   - load stage2 to 0x500
+   - load descriptor tables (IDT, GDT)
+   - enable A20
+   - load kernel image to 0x10000
+   - goto Protected Mode
+   - jump to stage2
 
-2. boot1.S is in charged of loading boot2.S into a certain place in memory and execute it 
+2. boot2 contains 32-bit code:
+   - jump to kernel 
 
-3. At this phase, boot2.S is just a simple program that prints out a message. We can make it to load a kernel in the future. 
 
 
 Notes

@@ -23,47 +23,38 @@
 install_gdt:    
         cli             	# clear interrupts 
         pusha           	# save registers
-        lgdt    gdtr_48 	# load GDT to GDTR
+        lgdt    gdt_desc 	# load GDT to GDTR
         sti             	# enable interrupts
         popa            	# restore registers
         ret             	# done
 
-        
-/*****************************************
-* Null descriptor
-* which is filled with eight 0 bytes 
-*****************************************/
-start_of_gdt:   
-        .quad   0       # 8-byte 0
 
+        .p2align        2       /* force 4-byte alignment */
+gdt:
+        .word   0, 0
+        .byte   0, 0, 0, 0
 
-/*****************************************
-* Code Descriptor 
-* right after null descriptor 
-*****************************************/        
-.short  0xffff          # limit low
-.short  0               # base low
-.byte   0               # base middle
-.byte   0b10011010      # access
-.byte   0b11001111      # granularity
-.byte   0               # base high
-        
+        /* code segment */
+        .word   0xFFFF, 0
+        .byte   0, 0x9A, 0xCF, 0
 
-/*****************************************
-* Data Descriptor 
-* right after null descriptor 
-*****************************************/        
-.short  0xffff          # limit low (same as code segment descriptor)
-.short  0               # base low
-.byte   0               # base middle
-.byte   0b10010010      # access
-.byte   0b11001111      # granularity
-.byte   0               # base high
-end_of_gdt:
+        /* data segment */
+        .word   0xFFFF, 0
+        .byte   0x, 0x92, 0xCF, 0
+
+        /* 16 bit real mode CS */
+        .word   0xFFFF, 0
+        .byte   0, 0x9E, 0, 0
+
+        /* 16 bit real mode DS */
+        .word   0xFFFF, 0
+        .byte   0, 0x92, 0, 0
+
         
-gdtr_48:                # this contains what will be load to GDTR register 
-        .short  end_of_gdt - start_of_gdt         # size of GDT (2 bytes)
-        .short  start_of_gdt, 0x1                 # base of GDT (4 bytes) --> become 0x1XXXX
+/* this is the GDT descriptor */        
+gdt_desc:              
+        .word   0x27            /* limit */
+        .long   gdt             /* addr */
         
 
 #endif
