@@ -3,6 +3,14 @@
  *  (C) Hoang Tran <trbhoang@gmail.com>
  */
 
+/*
+ *  We are loaded at 0x7C00 linear address. This bootloader does:
+ *  - load kernel code to a certain place 
+ *  - goto protected mode
+ *  - load global descriptor table
+ *  - jump to the kernel
+ */
+        
         .file   "boot.S"
         .text
         .code16
