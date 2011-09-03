@@ -10,15 +10,9 @@ _start:
  */
         .p2align        2       /* force 4-byte alignment */
 gdt:
-        .word   0, 0, 0, 0
-
-        /* code segment */
-        .word   0xFFFF, 0
-        .byte   0, 0x9A, 0xCF, 0
-
-        /* data segment */
-        .word   0xFFFF, 0
-        .byte   0, 0x92, 0xCF, 0
+        .long   0x00000000, 0x00000000
+        .long   0x0000FFFF, 0x00CF9A00  /* code segment */
+        .long   0x0000FFFF, 0x00CF9200  /* data segment */
 gdt_end:
         
 /* this is the GDT descriptor */        
