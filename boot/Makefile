@@ -8,7 +8,7 @@ INC_DIR = ../include/boot
 
 CC = gcc
 CFLAGS  = -Wall -Werror -nostdinc -I $(INC_DIR)
-LDFLAGS = -nostdlib -Wl,-N,--oformat=binary -Ttext=0x0
+LDFLAGS = -nostdlib -Wl,-N,--oformat=binary -Ttext=0x7C00
 
 
 all: boot image

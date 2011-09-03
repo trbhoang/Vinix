@@ -10,9 +10,16 @@ _start:
  */
         .p2align        2       /* force 4-byte alignment */
 gdt:
-        .long   0x00000000, 0x00000000
-        .long   0x0000FFFF, 0x00CF9A00  /* code segment */
-        .long   0x0000FFFF, 0x00CF9200  /* data segment */
+        .word   0, 0, 0, 0
+
+        /* code segment */
+        .word   0xFFFF, 0
+        .byte   0, 0x9A, 0xCF, 0
+
+        /* data segment */
+        .word   0xFFFF, 0
+        .byte   0, 0x92, 0xCF, 0
+        
 gdt_end:
         
 /* this is the GDT descriptor */        
@@ -23,19 +30,27 @@ gdt_desc:
         
 main:
         cli
-        movw    $0x07C0, %ax
+        xorw    %ax, %ax
         movw    %ax, %ds
         movw    %ax, %es
         movw    %ax, %ds
-
-        movw    $0x0, %ax
         movw    %ax, %ss
         movw    $0xFFFF, %sp
         sti
 
-        /* install GDT */
+        /* enter Protected Mode */
+        movl    %cr0, %eax
+        orw     $1, %ax
+        movl    %eax, %cr0
+
+        /* load GDT */
         lgdt    gdt_desc
 
+        ljmp    $0x08, $startup_32
+
+        .code32
+startup_32:
+        
         /* stop execution */
         cli
         hlt
