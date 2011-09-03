@@ -1,13 +1,22 @@
+/*
+ *  Bootloader
+ *  (C) Hoang Tran <trbhoang@gmail.com>
+ */
+
+        .file   "boot.S"
         .text
         .code16
         .global _start
+
+        .equ    CODE_SEL, 0x08    /* CS selector */
+        .equ    DATA_SEL, 0x10    /* DS selector */
         
 _start:
         jmp     main
 
 /*
- * DATA
- */
+ *  Global Descriptor Table 
+ */        
         .p2align        2       /* force 4-byte alignment */
 gdt:
         .word   0, 0, 0, 0
@@ -19,7 +28,6 @@ gdt:
         /* data segment */
         .word   0xFFFF, 0
         .byte   0, 0x92, 0xCF, 0
-        
 gdt_end:
         
 /* this is the GDT descriptor */        
@@ -46,16 +54,15 @@ main:
         /* load GDT */
         lgdt    gdt_desc
 
-        ljmp    $0x08, $startup_32
+        /* update CS */
+        ljmp    $CODE_SEL, $startup_32      
 
         .code32
 startup_32:
-        
         /* stop execution */
         cli
         hlt
         
 
-
 .org    510
-.word   0xAA55  /* boot sector signature */
+.word   0xAA55          /* boot sector signature */
