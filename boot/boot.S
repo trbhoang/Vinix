@@ -31,15 +31,20 @@ _start:
  */        
         .p2align        2                       /* force 4-byte alignment */
 gdt:
-        .word   0, 0, 0, 0
+        /* null descriptor */
+        .word   0, 0, 0, 0      
 
         /* code segment */
-        .word   0xFFFF, 0
-        .byte   0, 0x9A, 0xCF, 0
+        .word   0xFFFF                          /* limit = FFFF (2^16 mem unit = 2^16 * 4K = 4G) */
+        .word   0x0000                          /* base address = 0 */
+        .word   0x9A00                          /* code, read, exec */
+        .word   0x00CF                          /* granularity = 4096 (mem unit size = 4K) */
 
         /* data segment */
-        .word   0xFFFF, 0
-        .byte   0, 0x92, 0xCF, 0
+        .word   0xFFFF                          /* limit = FFFF (2^16 mem unit = 2^16 * 4K = 4G) */
+        .word   0x0000                          /* base address = 0 */
+        .word   0x9200                          /* data, read, write */
+        .word   0x00CF                          /* granularity = 4096 (mem unit size = 4K) */
 gdt_end:
         
 gdt_desc:                                       /* GDT descriptor */
