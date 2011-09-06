@@ -5,8 +5,10 @@
 
 /*
  *  We are loaded at 0x7C00 linear address. This bootloader does:
+ *  - move itself to 0x90000 (to prevent overwritten by kernel code later)
  *  - enable A20 line
- *  - load kernel code at 0x10000
+ *  - copy kernel code from floppy to memory location starting at 0x10000
+ *  - move kernel downto memory location 0x0
  *  - goto protected mode
  *  - load global descriptor table
  *  - update CS to point to code segment descriptor 
@@ -86,6 +88,21 @@ read_fd:
         int     $0x13           /* BIOS 13h function */
         jc      read_fd         /* try again if error */
 
+        
+        /* now move kernel down to location 0x0 */
+        cli
+        xorw    %ax, %ax        /* AX = 0x0 */
+        movw    %ax, %es        /* ES: destination segment */
+        movw    $0x1000, %ax    /* kernel is being at location 0x10000 */
+        movw    %ax, %ds        /* DS: source segment */
+        cld                     /* direction = 0 (move forward) */
+        xorw    %di, %di        /* DI = 0 */
+        xorw    %si, %si        /* SI = 0 */
+        movw    $0x8000, %cx    /* assume kernel has known size: 0x8000 * 4 bytes (512K) */
+        rep
+        movsl
+
+        
         /* enter Protected Mode */
         movl    %cr0, %eax
         orw     $1, %ax
