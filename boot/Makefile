@@ -8,16 +8,16 @@ INC_DIR = ../include/boot
 
 CC = gcc
 CFLAGS  = -Wall -Werror -nostdinc -I $(INC_DIR)
-LDFLAGS = -nostdlib -Wl,-N,--oformat=binary
+LDFLAGS = -nostdlib -Wl,-N,--oformat=binary -Ttext=0x0
 
 
 all: boot head image
 
 boot: boot.o
-	$(CC) $(CFLAGS) $(LDFLAGS) -Ttext=0x7C00 -o $@ $^		
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^		
 
 head: head.o
-	$(CC) $(CFLAGS) $(LDFLAGS) -Ttext=0x10000 -o $@ $^
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
 
 %.o: %.S
 	$(CC) $(CFLAGS) -c -o $@ $<				# compile file of assembly code (.S) to object file (.o)

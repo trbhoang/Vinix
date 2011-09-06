@@ -20,46 +20,34 @@
         .code16
         .global _start
 
-        .equ    CODE_SEL, 0x08          	/* CS selector */
-        .equ    DATA_SEL, 0x10          	/* DS selector */
-        .equ    KERN_SEC, 0x1000        	/* segment where kernel will be placed */
-        .equ    KERN_PM_OFFSET, 0x10000 	/* start address of kernel in protected mode */
+        BOOTSEG        = 0x07C0
+        INITSEG        = 0X9000
+        KERNSEG        = 0x1000
+        KERNSIZE       = 0x8000
+        
+        CODE_SEL       = 0x08          	/* CS selector */
+        DATA_SEL       = 0x10          	/* DS selector */
+        KERN_SEC       = 0x1000        	/* segment where kernel will be placed */
+        KERN_PM_OFFSET = 0x10000 	/* start address of kernel in protected mode */
         
 _start:
-        jmp     main
-
-/*
- *  Global Descriptor Table 
- */        
-        .p2align        2                       /* force 4-byte alignment */
-gdt:
-        /* null descriptor */
-        .word   0, 0, 0, 0      
-
-        /* code segment */
-        .word   0xFFFF                          /* limit = FFFF (2^16 mem unit = 2^16 * 4K = 4G) */
-        .word   0x0000                          /* base address = 0 */
-        .word   0x9A00                          /* code, read, exec */
-        .word   0x00CF                          /* granularity = 4096 (mem unit size = 4K) */
-
-        /* data segment */
-        .word   0xFFFF                          /* limit = FFFF (2^16 mem unit = 2^16 * 4K = 4G) */
-        .word   0x0000                          /* base address = 0 */
-        .word   0x9200                          /* data, read, write */
-        .word   0x00CF                          /* granularity = 4096 (mem unit size = 4K) */
-gdt_end:
-        
-gdt_desc:                                       /* GDT descriptor */
-        .word   gdt_end - gdt - 1               /* limit */
-        .long   gdt                             /* offset */
-
+        /* move the bootloader itself to 0x90000: copy 512 bytes (256 words) from 0x7C00 to 0x90000 */
+        movw    $BOOTSEG, %ax
+        movw    %ax, %ds
+        movw    $INITSEG, %ax
+        movw    %ax, %es
+        movw    $256, %cx
+        xorw    %di, %di
+        xorw    %si, %si
+        rep
+        movsw
+        ljmp    $INITSEG, $main         /* jump to next instruction at new location */
         
 main:
         cli
-        xorw    %ax, %ax
+        movw    %cs, %ax
         movw    %ax, %ds
         movw    %ax, %es
-        movw    %ax, %ds
         movw    %ax, %ss
         movw    $0xFFFF, %sp
         sti
@@ -103,25 +91,48 @@ read_fd:
         movsl
 
         
+        /* load GDT */
+        movw    %cs, %ax
+        movw    %ax, %ds        /* dont foget to set DS properly :-) */
+        lgdt    gdt_desc        /* lgdt ds:offset */
+
         /* enter Protected Mode */
         movl    %cr0, %eax
         orw     $1, %ax
         movl    %eax, %cr0
 
-        /* load GDT */
-        lgdt    gdt_desc
-
         /*
-         * Kernel is loaded at address that is out of 16-bit space (0x10000).
-         * So we can only jump to the kernel by 32-bit code. 
-         * And before going into 32-bit code, we must update CS properly (make it point to CS selector).
+         * We're now in Protected Mode and kernel is at 0x0. So just jump there.
          */
-        ljmp    $CODE_SEL, $startup_32
+        ljmp    $CODE_SEL, $0x0
 
-        .code32
-startup_32:     
-        ljmp    $CODE_SEL, $KERN_PM_OFFSET
         
 
+/*
+ *  Global Descriptor Table 
+ */        
+        .p2align        2                       /* force 4-byte alignment */
+gdt:
+        /* null descriptor */
+        .word   0, 0, 0, 0      
+
+        /* code segment */
+        .word   0xFFFF                          /* limit = FFFF (2^16 mem unit = 2^16 * 4K = 4G) */
+        .word   0x0000                          /* base address = 0 */
+        .word   0x9A00                          /* code, read, exec */
+        .word   0x00CF                          /* granularity = 4096 (mem unit size = 4K) */
+
+        /* data segment */
+        .word   0xFFFF                          /* limit = FFFF (2^16 mem unit = 2^16 * 4K = 4G) */
+        .word   0x0000                          /* base address = 0 */
+        .word   0x9200                          /* data, read, write */
+        .word   0x00CF                          /* granularity = 4096 (mem unit size = 4K) */
+gdt_end:
+        
+gdt_desc:                                       /* GDT descriptor */
+        .word   gdt_end - gdt - 1               /* limit */
+        .word   gdt, 0x9                        /* gdt base = 0x9XXXX */
+
+        
 .org    510
 .word   0xAA55          /* boot sector signature */
