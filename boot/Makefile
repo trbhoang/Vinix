@@ -28,4 +28,4 @@ image:
 	dd if=head of=$(IMAGE_FILE) seek=1			# record head at second sector (right after boot sector)
 
 clean:
-	rm *.o boot $(IMAGE_FILE)
+	rm *.o boot head $(IMAGE_FILE)

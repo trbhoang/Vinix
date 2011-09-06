@@ -5,33 +5,13 @@
 CFLAGS  = -Wall -Werror -nostdinc
 LDFLAGS = -nostdlib -Wl,-N,--oformat,binary
 
-BOOT_START_ADDR = 0x7c00
-KERN_START_ADDR = 0x1000
-
 CC = gcc
 LD = ld
 
-BOOTDIR  = boot
-BUILDDIR = tmp
-BOOT_FILES = boot.o
-BOOT_INCLUDES = boot
+all:
+	(cd boot; make)
 
-all : $(BUILDDIR)/Image
-
-# build assembly code
-%.o : %.S
-	$(CC) $(CFLAGS) -c -o $@ $<
-
-# link boot object file
-$(BUILDDIR)/Image : $(BOOT_FILES:%=$(BOOTDIR)/%)
-	$(CC) $(CFLAGS) $(LDFLAGS),-Ttext,$(BOOT_START_ADDR) -o $@ $^
-
-$(BUILDDIR)/boot0 : $(BOOTDIR)/boot0
-
-install : $(BUILDDIR)/Image
-	bochs
 
 .PHONY : clean
 clean :
-	-rm $(BUILDDIR)/Image
-	-rm $(BOOTDIR)/*.o
+	(cd boot; make clean)
