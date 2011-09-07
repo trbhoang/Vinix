@@ -10,7 +10,7 @@
  *  - copy kernel code from floppy to memory location starting at 0x10000
  *  - move kernel downto memory location 0x0
  *  - goto protected mode
- *  - load global descriptor table
+ *  - load Interrupt Descriptor Table & Global Descriptor Table
  *  - update CS to point to code segment descriptor 
  *  - jump to the kernel
  */
@@ -91,9 +91,10 @@ read_fd:
         movsl
 
         
-        /* load GDT */
+        /* load IDT & GDT */
         movw    %cs, %ax
         movw    %ax, %ds        /* dont foget to set DS properly :-) */
+        lidt    idt_desc
         lgdt    gdt_desc        /* lgdt ds:offset */
 
         /* enter Protected Mode */
@@ -128,6 +129,10 @@ gdt:
         .word   0x9200                          /* data, read, write */
         .word   0x00CF                          /* granularity = 4096 (mem unit size = 4K) */
 gdt_end:
+
+idt_desc:
+        .word   0                               /* IDT limit = 0 */
+        .word   0, 0                            /* IDT base = 0 */
         
 gdt_desc:                                       /* GDT descriptor */
         .word   gdt_end - gdt - 1               /* limit */
