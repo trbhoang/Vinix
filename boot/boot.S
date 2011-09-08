@@ -6,11 +6,12 @@
 /*
  *  We are loaded at 0x7C00 linear address. This bootloader does:
  *  - move itself to 0x90000 (to prevent overwritten by kernel code later)
- *  - enable A20 line
  *  - copy kernel code from floppy to memory location starting at 0x10000
  *  - move kernel downto memory location 0x0
- *  - goto protected mode
  *  - load Interrupt Descriptor Table & Global Descriptor Table
+ *  - enable A20 line
+ *  - reprogram interrupt controller         
+ *  - goto protected mode
  *  - update CS to point to code segment descriptor 
  *  - jump to the kernel
  */
@@ -52,9 +53,6 @@ main:
         movw    $0xFFFF, %sp
         sti
 
-        /* enable A20 line: use BIOS routine (may try other methods as well) */
-        movw    $0x2401, %ax
-        int     $0x15
         
         /* load kernel code */
 reset_fd:
@@ -97,18 +95,78 @@ read_fd:
         lidt    idt_desc
         lgdt    gdt_desc        /* lgdt ds:offset */
 
+        
+        /* enable A20 line by programming keyboard controller */
+        call    empty_8042
+        movb    $0xD1, %al      
+        outb    %al, $0x64       /* write to port 0x64 */
+        call    empty_8042
+        movb    $0xDF, %al
+        outb    %al, $0x60
+        call    empty_8042
+
+
+        /*
+         * On 32-bit x86, the first 32 interrupts are reserved by Intel for special uses.
+         * So before entering protected mode, we need to reprogram 8259 interrupt controller
+         * to map its interrupt lines to proper interrupt entries (from entry 0x20th) in Interrupt Vector Table (Interrupt Descriptor Table).
+         */
+        movb    $0x11, %al              /* initialization sequence */
+        outb    %al, $0x20              /* send it to 8259A-1 */
+        .word   0x00eb, 0x00eb          /* jmp $+2, jmp $+2 */
+        outb    %al, $0xa0              /* and to 8259A-2 */
+        .word   0x00eb, 0x00eb
+        movb    $0x20, %al              /* start of hardware interrupt 0 (0x20) */
+        outb    %al, $0x21
+        .word   0x00eb, 0x00eb
+        movb    $0x28, %al              /* start of hardware interrupt 8 (0x28) */
+        outb    %al, $0xa1
+        .word   0x00eb, 0x00eb
+        movb    $0x04, %al              /* 8259-1 is master */
+        outb    %al, $0x21
+        .word   0x00eb, 0x00eb
+        movb    $0x02, %al              /* 8259-2 is slave */
+        outb    %al, $0xa1
+        .word   0x00eb, 0x00eb
+        movb    $0x01, %al              /* 8086 mode for both */
+        outb    %al, $0x21
+        .word   0x00eb, 0x00eb
+        outb    %al, $0xa1
+        .word   0x00eb, 0x00eb
+        movb    $0xff, %al              /* mask off all interrupts for now */
+        outb    %al, $0x21
+        .word   0x00eb, 0x00eb
+        outb    %al, $0xa1
+
+        
         /* enter Protected Mode */
         movl    %cr0, %eax
         orw     $1, %ax
         movl    %eax, %cr0
 
+        
         /*
          * We're now in Protected Mode and kernel is at 0x0. So just jump there.
          */
         ljmp    $CODE_SEL, $0x0
 
         
+/*
+ * Routines 
+ */
 
+/*
+ * This routine checks if the keyboard command queue is empty.
+ * If not, we probably couldn't proceed anyway.
+ */        
+empty_8042:
+        .word   0x00eb, 0x00eb
+        inb     $0x64, %al              /* read value from port 0x64 to AL */
+        testb   $2, %al                 /* AL & 2 (is input buffer full?) */
+        jnz     empty_8042              /* Zero flag is on (yes) */
+        ret
+        
+        
 /*
  *  Global Descriptor Table 
  */        
