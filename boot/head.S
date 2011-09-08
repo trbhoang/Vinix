@@ -34,7 +34,7 @@ startup_32:
         movw    %ax, %es
         movw    %ax, %fs
         movw    %ax, %gs
-        lss     _stack_start, %esp
+        lss     stack_start, %esp
         xorl    %eax, %eax
         
 

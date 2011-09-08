@@ -12,7 +12,7 @@ all: Image
 
 Image: boot/boot Image/system
 	dd if=/dev/zero of=Image/floppy.img bs=512 count=2880
-	dd if=boot of=Image/floppy.img count=1
+	dd if=boot/boot of=Image/floppy.img count=1
 	dd if=Image/system of=Image/floppy.img seek=1
 
 boot/boot: boot/boot.S
@@ -30,6 +30,7 @@ kernel/kernel.o:
 
 .PHONY : clean
 clean :
+	(cd Image; rm *)
 	(cd boot; make clean)
 	(cd kernel; make clean)
 
