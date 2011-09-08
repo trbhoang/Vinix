@@ -1,26 +1,19 @@
-# makefile
-# this is makefile to build bootloader
+# Makefile
+# This is makefile to build bootloader
 # Hoang Tran <trbhoang@gmail.com>
 
-IMAGE_DIR = ../Image
-IMAGE_FILE = $(IMAGE_DIR)/floppy.img
-INC_DIR = ../include/boot
+IMAGE_FILE = ../Image/floppy.img
+INC = ../include/boot
 
 CC = gcc
-CFLAGS  = -Wall -Werror -nostdinc -I $(INC_DIR)
+CFLAGS  = -Wall -Werror -nostdinc -I $(INC)
 LDFLAGS = -nostdlib -Wl,-N,--oformat=binary -Ttext=0x0
 
 
 all: boot head image
 
-boot: boot.o
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^		
-
-head: head.o
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
-
-%.o: %.S
-	$(CC) $(CFLAGS) -c -o $@ $<				# compile file of assembly code (.S) to object file (.o)
+.S:
+	$(CC) $(CFLAGS) $@.S $(LDFLAGS) -o $@	# compile and link  *.S to * binary
 
 image:  
 	dd if=/dev/zero of=$(IMAGE_FILE) bs=512 count=2880	# make floppy image file 
