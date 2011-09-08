@@ -3,15 +3,33 @@
 # Hoang Tran <trbhoang@gmail.com>
 
 CFLAGS  = -Wall -Werror -nostdinc
-LDFLAGS = -nostdlib -Wl,-N,--oformat,binary
+LDFLAGS = -nostdlib -s -x -M
 
 CC = gcc
 LD = ld
 
-all:
-	(cd boot; make)
+all: Image
+
+Image: boot/boot Image/system
+	dd if=/dev/zero of=Image/floppy.img bs=512 count=2880
+	dd if=boot of=Image/floppy.img count=1
+	dd if=Image/system of=Image/floppy.img seek=1
+
+boot/boot: boot/boot.S
+	$(CC) $(CFLAGS) $@.S -nostdlib -Wl,-N,--oformat=binary -Ttext=0x0 -o $@
+
+Image/system: boot/head.o kernel/kernel.o
+	$(LD) $(LDFLAGS) boot/head.o kernel/kernel.o -o Image/system
+
+boot/head.o: boot/head.S
+	$(CC) $(CFLAGS) $*.S -c -o $@
+
+kernel/kernel.o:
+	(cd kernel; make)
 
 
 .PHONY : clean
 clean :
 	(cd boot; make clean)
+	(cd kernel; make clean)
+
