@@ -1,12 +1,11 @@
-# Makefile
-# This is makefile to build bootloader
-# Hoang Tran <trbhoang@gmail.com>
-
-CFLAGS  = -Wall -Werror -nostdinc
-LDFLAGS = -nostdlib -x -M -Ttext 0 -e startup_32
+#
+#  (C) Hoang Tran <trbhoang@gmail.com>
+#
 
 CC = gcc
+CFLAGS  = -Wall -nostdinc -fno-stack-protector
 LD = ld
+LDFLAGS = -nostdlib -x -M -Ttext 0
 
 all: Image
 
@@ -20,7 +19,8 @@ boot/boot: boot/boot.S
 Image/system: boot/head.o kernel/kernel.o
 	$(LD) $(LDFLAGS) boot/head.o kernel/kernel.o -o Image/system
 
-boot/head.o: boot/head.S
+# boot/head.o: boot/head.S
+.S.o:
 	$(CC) $(CFLAGS) $*.S -c -o $@
 
 kernel/kernel.o:
