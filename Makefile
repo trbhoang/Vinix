@@ -3,7 +3,7 @@
 # Hoang Tran <trbhoang@gmail.com>
 
 CFLAGS  = -Wall -Werror -nostdinc
-LDFLAGS = -nostdlib -s -x -M
+LDFLAGS = -nostdlib -x -M -Ttext 0 -e startup_32
 
 CC = gcc
 LD = ld
@@ -11,9 +11,8 @@ LD = ld
 all: Image
 
 Image: boot/boot Image/system
-	dd if=/dev/zero of=Image/floppy.img bs=512 count=2880
-	dd if=boot/boot of=Image/floppy.img count=1
-	dd if=Image/system of=Image/floppy.img seek=1
+	objcopy -O binary -R .note -R .comment Image/system Image/system.bin
+	cat boot/boot Image/system.bin > Image/floppy.img
 
 boot/boot: boot/boot.S
 	$(CC) $(CFLAGS) $@.S -nostdlib -Wl,-N,--oformat=binary -Ttext=0x0 -o $@
