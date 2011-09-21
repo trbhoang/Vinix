@@ -70,7 +70,7 @@ reset_fd:
         xorw    %bx, %bx        	/* clear BX */
 read_fd:
         movb    $0x02, %ah      /* read floppy sector function */
-        movb    $10, %al         /* try to read 10 sectors */
+        movb    $17, %al         /* try to read 10 sectors */
         movb    $0, %ch         /* we are reading the sectors past us, so it's still on track 1 (cylinder 1, note: tracks are numbered from 0) */
         movb    $2, %cl         /* start reading from the second sector (note: sectors are numbered from 1) */
         movb    $0, %dh         /* head number (floppy disk has only one 'plane', so two 'faces' or 'heads': head 0, head 1), the second sector is on head 0 */
