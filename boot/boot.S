@@ -70,7 +70,7 @@ reset_fd:
         xorw    %bx, %bx        	/* clear BX */
 read_fd:
         movb    $0x02, %ah      /* read floppy sector function */
-        movb    $0xff, %al       /* read 255 sectors (need update to read 512K later) */
+        movb    $10, %al         /* try to read 10 sectors */
         movb    $0, %ch         /* we are reading the sectors past us, so it's still on track 1 (cylinder 1, note: tracks are numbered from 0) */
         movb    $2, %cl         /* start reading from the second sector (note: sectors are numbered from 1) */
         movb    $0, %dh         /* head number (floppy disk has only one 'plane', so two 'faces' or 'heads': head 0, head 1), the second sector is on head 0 */
@@ -170,112 +170,6 @@ empty_8042:
         jnz     empty_8042              /* Zero flag is on (yes) */
         ret
 
-/*
- *  This routine loads the system at address 0x10000, making sure no 64K boundaries
- *  are crossed. We try to load it as fast as possible, loading whole tracks whenever we can.
- *  in: ES - starting address segment (normally 0x1000)
- *  
- *  This routine has to be recompiled to fit another drive type,
- *  just change the "sectors" variable at the start of the file
- *  (originally 18, for a 1.44M drive)
- *  
- *  Floppy disk structure:
- *    - 2 heads or faces: front side and back side (0, 1)
- *    - 64 tracks
- *    - 18 sectors per track, each sector is 512-byte length
- */
-sread:  .word 1         /* sectors read of current track */
-head:   .word 0         /* current head */
-track:  .word 0         /* current track */
-read_it:
-        movw    %es, %ax
-        test    $0x0fff, %ax    /* AX & 0x0fff */
-die:    jne     die             /* jump if not equal (ZF = 0) --> ES = 0xX000 (ES must be at 64K boundary) */
-        xorw    %bx, %bx        /* BX is starting address within segment */
-rp_read:
-        movw    %es, %ax
-        cmp     $KERN_END_SEG, %ax
-        jb      ok1_read        /* jump if below */
-        ret
-ok1_read:       
-        movw    $sectors, %ax
-        subw    sread, %ax      /* AX now contains remaining unread sectors  */
-        movw    %ax, %cx        /* CX = AX */        
-        shl     $9, %cx         /* CX = CX * 512 */
-        addw    %bx, %cx        /* CX = CX + BX */
-        jnc     ok2_read        /* jump if not carry */
-        je      ok2_read        /* jump if equal */
-        xorw    %ax, %ax
-        subw    %bx, %ax
-        shr     $9, %ax         /* AX = AX / 512 */
-ok2_read:
-        call    read_track
-        movw    %ax, %cx
-        addw    sread, %ax
-        cmp     $sectors, %ax
-        jne     ok3_read
-        movw    $1, %ax
-        subw    head, %ax
-        jne     ok4_read
-        incw    track
-ok4_read:
-        movw    %ax, head
-        xorw    %ax, %ax
-ok3_read:
-        movw    %ax, sread      /* update num of read sectors */
-        shl     $9, %cx
-        addw    %cx, %bx
-        jnc     rp_read
-        movw    %es, %ax
-        addw    $0x1000, %ax
-        movw    %ax, %es
-        xorw    %bx, %bx
-        jmp     rp_read
-
-read_track:
-        push    %ax
-        push    %bx
-        push    %cx
-        push    %dx
-        movw    track, %dx
-        movw    sread, %cx      /* CL contains 'sector' number */
-        incw    %cx
-        movb    %dl, %ch        /* CH contains 'track' number */        
-        movw    head, %dx       
-        movb    %dl, %dh        /* DH contains 'head' number */
-        movb    $0, %dl         /* drive number (floppy: 0) */
-        and     $0x0100, %dx    /* bit-masking DX */
-        movb    $2, %ah         /* INT 13h AH=02h: read sectors from drive */
-        int     $0x13
-        jc      bad_rt  
-        pop     %dx
-        pop     %cx
-        pop     %bx
-        pop     %ax
-        ret
-bad_rt:
-        movw    $0, %ax
-        movw    $0, %dx
-        int     $0x13
-        pop     %dx
-        pop     %cx
-        pop     %bx
-        pop     %ax
-        jmp     read_track
-
-/*
- * This routine turns off the floppy drive motor,
- * so that we enter the kernel in a known state, and
- * don't have to worry about it later. 
- */
-/* kill_motor:
-        push    %dx
-        movw    $0x3f2, %dx
-        movb    $0, %al
-        outb
-        pop     dx
-        ret
-*/        
         
 /*
  *  Global Descriptor Table
