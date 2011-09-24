@@ -27,8 +27,10 @@
         KERN_SEG       = 0x1000         /* segment where kernel will be placed */
         KERN_SIZE      = 0x8000
         KERN_END_SEG   = KERN_SEG + KERN_SIZE
-        
-        sectors        = 18
+
+        /* 1.44Mb disk */
+        SECTORS_PER_TRACK       = 18
+        HEADS                   = 2
 
         CODE_SEL       = 0x08          	/* CS selector */
         DATA_SEL       = 0x10          	/* DS selector */
@@ -45,9 +47,9 @@ _start:
         xorw    %si, %si
         rep
         movsw
-        ljmp    $INIT_SEG, $main         /* jump to next instruction at new location */
+        ljmp    $INIT_SEG, $go           /* jump to next instruction at new location */
 
-main:
+go:
         cli
         movw    %cs, %ax
         movw    %ax, %ds
@@ -58,25 +60,9 @@ main:
 
 
         /* load kernel code */
-        
-reset_fd:
-        movb    $0, %ah         	/* reset floppy disk function */
-        movb    $0, %dl         	/* drive number: 0 is floppy drive */
-        int     $0x13           	/* BIOS 13h function */
-        jc      reset_fd        	/* try again if carry flag (CF) is set (there was an error) */
-
-        movw    $KERN_SEG, %ax          /* we are going to read sectors which contains kernel image at ES:BX */
-        movw    %ax, %es        	/* ES = KERN_SEG */
-        xorw    %bx, %bx        	/* clear BX */
-read_fd:
-        movb    $0x02, %ah      /* read floppy sector function */
-        movb    $17, %al         /* try to read 10 sectors */
-        movb    $0, %ch         /* we are reading the sectors past us, so it's still on track 1 (cylinder 1, note: tracks are numbered from 0) */
-        movb    $2, %cl         /* start reading from the second sector (note: sectors are numbered from 1) */
-        movb    $0, %dh         /* head number (floppy disk has only one 'plane', so two 'faces' or 'heads': head 0, head 1), the second sector is on head 0 */
-        movb    $0, %dl         /* drive number (0 is floppy drive) */
-        int     $0x13           /* BIOS 13h function */
-        jc      read_fd         /* try again if error */
+        movw    $KERN_SEG, %ax
+        movw    %ax, %es
+        call    read
 
 
         /* now move kernel down to location 0x0 */
@@ -172,6 +158,75 @@ empty_8042:
 
         
 /*
+ *  This routine read sectors which contain kernel from floppy disk into memory at certain place.
+ *  ref: http://forum.osdev.org/viewtopic.php?f=1&t=24041
+ */
+read:
+        cmpb    $8, retry       /* if we've retried 8 times due to errors */
+        je      loadfail        /* then we throw in the towel */
+        push    %bx             /* save our current destination offset on the stack, in case a buggy BIOS destroys it */
+        movb    $2, %ah         /* int 13h function 2: read sector(s) */
+        movb    $1, %al         /* we want one sector */
+        movb    sect, %cl
+        movb    cyl, %ch
+        movb    head, %dh
+        int     $0x13           /* do the call */
+        pop     %bx             /* pop offset back into BX */
+        incb    retry
+        jc      read
+        movb    $0, retry       /* if successfull read, reset the retry count for the next sector */
+        
+        movb    $0x0E, %ah      /* print a dot after each sector is read to indicate progress */
+        movb    $46, %al
+        int     $0x10
+
+        addw    $512, %bx       /* increase destination offset with each new sector read */
+        decb    readcount
+        cmpb    $0, readcount   /* have we read all the sectors we wanted to? */
+        jz      done            /* then finished with disk reads... */
+
+        incb    sect            /* increment current sector */
+        movb    sect, %al
+        cmpb    $SECTORS_PER_TRACK, %al         /* is it now higher than our max num of sectors per track? */
+        ja      inchead                         /* then go wrap it around and increment the head */
+        jmp     read                            /* otherwise, read next sector */
+
+inchead:
+        movb    $1, sect        /* reset current sector number */
+        incb    head            /* increment current head */
+        movb    head, %al
+        cmpb    $HEADS, %al     /* has it reached the maximum? */
+        je      inccyl          /* go wrap it around and increment the cylinder */
+        jmp     read            /* otherwise, read next sector */
+
+inccyl:
+        movb    $0, head        /* reset current head */
+        incb    cyl             /* increment cylinder */
+        jmp     read            /* read next sector */
+        
+done:
+        ret
+
+loadfail:
+        movw    $error, %si
+        call    printmsg
+        hlt
+        
+printmsg:
+        cld
+nextchar:
+        lodsb
+        cmp     $0, %al
+        jz      printdone
+        movb    $0x0E, %ah
+        int     $0x10
+        jmp     nextchar
+printdone:
+        ret
+
+        
+        
+/*
  *  Global Descriptor Table
  */
         .p2align        2                       /* force 4-byte alignment */
@@ -200,6 +255,14 @@ gdt_desc:                                       /* GDT descriptor */
         .word   gdt_end - gdt - 1               /* limit */
         .word   gdt, 0x9                        /* gdt base = 0x9XXXX */
 
-
+        
+error:          .string "disk error! System halted.\r\n"
+sect:           .byte 1         /* sectors read of current track */
+head:           .byte 0         /* current head */
+cyl:            .byte 0         /* current cylinder */
+retry:          .byte 0
+readcount:      .byte 32        /* number of sectors to read when loading kernel */
+        
+        
 .org    510
 .word   0xAA55          /* boot sector signature */
