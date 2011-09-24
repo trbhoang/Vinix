@@ -159,7 +159,9 @@ empty_8042:
         
 /*
  *  This routine read sectors which contain kernel from floppy disk into memory at certain place.
- *  ref: http://forum.osdev.org/viewtopic.php?f=1&t=24041
+ *  - adjust 'readcount' variable to load any number of sectors
+ *        
+ *  Ref: http://forum.osdev.org/viewtopic.php?f=1&t=24041
  */
 read:
         cmpb    $8, retry       /* if we've retried 8 times due to errors */
