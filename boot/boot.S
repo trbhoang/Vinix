@@ -183,8 +183,13 @@ read:
         int     $0x10
 
         addw    $512, %bx       /* increase destination offset with each new sector read */
-        decb    readcount
-        cmpb    $0, readcount   /* have we read all the sectors we wanted to? */
+        jnz      inccount       /* out of segment size (16K) */
+        movw    %es, %ax
+        addw    $0x1000, %ax
+        movw    %ax, %es
+inccount:       
+        decw    readcount
+        cmpw    $0, readcount   /* have we read all the sectors we wanted to? */
         jz      done            /* then finished with disk reads... */
 
         incb    sect            /* increment current sector */
@@ -259,11 +264,11 @@ gdt_desc:                                       /* GDT descriptor */
 
         
 error:          .string "disk error! System halted.\r\n"
-sect:           .byte 1         /* sectors read of current track */
+sect:           .byte 2         /* sectors read of current track */
 head:           .byte 0         /* current head */
 cyl:            .byte 0         /* current cylinder */
 retry:          .byte 0
-readcount:      .byte 32        /* number of sectors to read when loading kernel */
+readcount:      .word 1024      /* number of sectors to read when loading kernel */
         
         
 .org    510
