@@ -36,6 +36,17 @@ startup_32:
         movw    %ax, %gs
         lss     stack_start, %esp
         xorl    %eax, %eax
+1:      incl    %eax            /* check that A20 is really enabled */
+        movl    %eax, 0x000000
+        cmpl    %eax, 0x100000
+        je      1b
+        movl    %cr0, %eax              /* check math chip */
+        andl    $0x80000011, %eax       /* save PG, ET, PE */
+        testl   $0x10, %eax
+        jne     1f                      /* ET is set - 387 is present */
+        orl     $4, %eax                /* else set emulate bit */
+1:      movl    %eax, %cr0
+        jmp     after_page_tables
         
 
 /*
