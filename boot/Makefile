@@ -17,4 +17,4 @@ all: boot head image
 
 
 clean:
-	-rm *.o boot 
+	rm -vf *.o boot 

@@ -32,7 +32,8 @@ init/main.o:
 
 .PHONY : clean
 clean :
-	(cd Image; rm *)
+	(cd Image; rm -vf *)
 	(cd boot; make clean)
+	(cd init; make clean)
 	(cd kernel; make clean)
 
