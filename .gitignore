@@ -1,9 +1,6 @@
 *.o
 *.img
-kernel*
 parport.out
 bochsout.txt
 boot/boot
-boot/boot1
-boot/boot2
 tmp/*
