@@ -54,6 +54,7 @@
 #include <sys/times.h>
 #include <sys/utsname.h>
 #include <utime.h>
+#include <dirent.h>
 
 #ifdef __LIBRARY__
 
