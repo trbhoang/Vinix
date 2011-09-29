@@ -7,6 +7,8 @@ CFLAGS  = -Wall -nostdinc -fno-stack-protector
 LD = ld
 LDFLAGS = -nostdlib -x -M -Ttext 0
 
+LIBS = lib/lib.a
+
 all: Image
 
 Image: boot/boot Image/system
@@ -16,8 +18,8 @@ Image: boot/boot Image/system
 boot/boot: boot/boot.S
 	$(CC) $(CFLAGS) $@.S -nostdlib -Wl,-N,--oformat=binary -Ttext=0x0 -o $@
 
-Image/system: boot/head.o init/main.o kernel/kernel.o 
-	$(LD) $(LDFLAGS) boot/head.o init/main.o kernel/kernel.o -o Image/system
+Image/system: boot/head.o init/main.o kernel/kernel.o $(LIBS)
+	$(LD) $(LDFLAGS) boot/head.o init/main.o kernel/kernel.o $(LIBS) -o Image/system
 
 # boot/head.o: boot/head.S
 .S.o:
@@ -29,6 +31,8 @@ kernel/kernel.o:
 init/main.o:
 	(cd init; make)
 
+lib/lib.a:
+	(cd lib; make)
 
 .PHONY : clean
 clean :
@@ -36,4 +40,5 @@ clean :
 	(cd boot; make clean)
 	(cd init; make clean)
 	(cd kernel; make clean)
+	(cd lib; make clean)
 

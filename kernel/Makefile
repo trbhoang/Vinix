@@ -3,9 +3,9 @@
 #
 
 CC = gcc
-CFLAGS  = -Wall -Werror -nostdinc -I ../include
+CFLAGS = -Wall -Werror -nostdinc -I ../include
 
-OBJS = sched.o mktime.o tty_io.o console.o serial.o keyboard.o
+OBJS = sched.o mktime.o tty_io.o console.o serial.o keyboard.o rs_io.o
 
 
 kernel.o: $(OBJS)
@@ -28,6 +28,9 @@ serial.o: serial.c
 
 keyboard.o: keyboard.S
 	$(CC) $(CFLAGS) keyboard.S -c -o keyboard.o
+
+rs_io.o: rs_io.S
+	$(CC) $(CFLAGS) rs_io.S -c -o rs_io.o
 
 clean:
 	rm -vf *.o
