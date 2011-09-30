@@ -10,7 +10,7 @@ CFLAGS = -Wall -Werror -nostdinc -I ../include
 .S.o:
 	$(CC) $(CFLAGS) -c -o $*.o $<
 
-OBJS = sched.o mktime.o tty_io.o console.o serial.o keyboard.o rs_io.o traps.o asm.o
+OBJS = sched.o mktime.o tty_io.o console.o serial.o keyboard.o rs_io.o traps.o asm.o printk.o
 
 all: kernel.o
 
