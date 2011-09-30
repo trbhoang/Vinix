@@ -18,7 +18,7 @@ Image: boot/boot Image/system
 boot/boot: boot/boot.S
 	$(CC) $(CFLAGS) $@.S -nostdlib -Wl,-N,--oformat=binary -Ttext=0x0 -o $@
 
-Image/system: boot/head.o init/main.o kernel/kernel.o $(LIBS)
+Image/system: boot/head.o init/main.o kernel/kernel.o mm/mm.o $(LIBS)
 	$(LD) $(LDFLAGS) boot/head.o init/main.o kernel/kernel.o $(LIBS) -o Image/system
 
 # boot/head.o: boot/head.S
@@ -33,6 +33,9 @@ init/main.o:
 
 lib/lib.a:
 	(cd lib; make)
+
+mm/mm.o:
+	(cd mm; make)
 
 .PHONY : clean
 clean :

@@ -5,7 +5,7 @@
 CC = gcc
 CFLAGS = -Wall -Werror -nostdinc -I ../include
 
-OBJS = sched.o mktime.o tty_io.o console.o serial.o keyboard.o rs_io.o
+OBJS = sched.o mktime.o tty_io.o console.o serial.o keyboard.o rs_io.o traps.o asm.o
 
 
 kernel.o: $(OBJS)
@@ -31,6 +31,12 @@ keyboard.o: keyboard.S
 
 rs_io.o: rs_io.S
 	$(CC) $(CFLAGS) rs_io.S -c -o rs_io.o
+
+traps.o: traps.c
+	$(CC) $(CFLAGS) -c traps.c
+
+asm.o: asm.S
+	$(CC) $(CFLAGS) asm.S -c -o asm.o
 
 clean:
 	rm -vf *.o
