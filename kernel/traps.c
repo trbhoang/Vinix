@@ -132,6 +132,11 @@ void do_device_not_available(long esp, long error_code)
   die("coprocessor segment overrun", esp, error_code);
 }
 
+void do_coprocessor_segment_overrun(long esp, long error_code)
+{
+  die("coprocessor segment overrun", esp, error_code);
+}
+
 void do_invalid_TSS(long esp, long error_code)
 {
   die("invalid TSS", esp, error_code);
