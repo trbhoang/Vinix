@@ -18,7 +18,7 @@ union task_union {
 
 static union task_union init_task = {INIT_TASK,};
 
-
+struct task_struct *current = &(init_task.task);
 struct task_struct *task[NR_TASKS] = {&(init_task.task), };
 
 

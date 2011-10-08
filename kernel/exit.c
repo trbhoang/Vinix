@@ -1,3 +1,28 @@
+#include <errno.h>
+#include <signal.h>
+#include <sys/wait.h>
+
+#include <linux/sched.h>
+#include <linux/kernel.h>
+#include <linux/tty.h>
+#include <asm/segment.h>
+
+int sys_close(int fd);
+
+void release(struct task_struct *p)
+{
+  int i;
+
+  if (!p) return;
+  for (i = 1; i < NR_TASKS; i++)
+    if (task[i] == p) {
+      task[i] = NULL;
+      free_page((long) p);
+      schedule();
+      return;
+    }
+  panic("trying to release non-existent task");
+}
 
 static inline void send_sig(long sig, struct task_struct *p, int priv)
 {
