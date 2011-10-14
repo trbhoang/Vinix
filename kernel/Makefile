@@ -3,14 +3,14 @@
 #
 
 CC = gcc
-CFLAGS = -Wall -Werror -nostdinc -I ../include
+CFLAGS = -Wall -Werror -fno-builtin -nostdinc -I ../include
 
 .c.o:
 	$(CC) $(CFLAGS) -c -o $*.o $<
 .S.o:
 	$(CC) $(CFLAGS) -c -o $*.o $<
 
-OBJS = sched.o mktime.o tty_io.o console.o serial.o keyboard.o rs_io.o traps.o asm.o printk.o exit.o
+OBJS = sched.o mktime.o tty_io.o console.o serial.o keyboard.o rs_io.o traps.o asm.o printk.o exit.o vsprintf.o
 
 all: kernel.o
 
