@@ -6,9 +6,9 @@ CFLAGS = -Wall -Werror -nostdinc -I ../include
 .S.o:
 	$(CC) $(CFLAGS) -c -o $*.o $<
 
-OBJS = page.o
+OBJS = page.o segment.o
 
-all: mm.o
+all: mm.o 
 
 mm.o: $(OBJS)
 	$(LD) -r -o $@ $(OBJS)		# -r means 'relocatable' which make this kind of 'combining' OBJS into one

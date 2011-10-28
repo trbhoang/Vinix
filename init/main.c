@@ -1,6 +1,23 @@
+#define __LIBRARY__
 #include <unistd.h>
 #include <time.h>
+
+/*
+ * We need this inline - forking from kernel space will result
+ * in NO COPY ON WRITE (!!!), until an execve is executed. This
+ * is no problem, but for the stack. This is handled by not letting
+ * main() use the stack at all after fork(). Thus, no function
+ * calls - which means inline code for fork too, as otherwise we
+ * would use the stack upon exit from fork().
+ *
+ * Actually only pause and fork are needed inline, so that there
+ * won't be any messing with the stack from main(), but we define
+ * some others too.
+ */
+
+
 #include <linux/tty.h>
+#include <linux/sched.h>
 
 #include <asm/io.h>
 
@@ -51,10 +68,12 @@ static void time_init(void)
   startup_time = kernel_mktime(&time);
 }
 
-int main(void)
+int main(void)                  
 {
+  /* Interrupts are still disabled. Do necessary setups, then enable them. */
   time_init();
   tty_init();
+  trap_init();
   
 
   /*
