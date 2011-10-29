@@ -7,7 +7,7 @@ CFLAGS  = -Wall -nostdinc -fno-stack-protector
 LD = ld
 LDFLAGS = -nostdlib -x -M -Ttext 0
 
-OBJS = boot/head.o init/main.o kernel/kernel.o mm/mm.o
+OBJS = boot/head.o init/main.o kernel/kernel.o mm/mm.o fs/fs.o
 LIBS = lib/lib.a
 
 all: Image
@@ -38,6 +38,9 @@ lib/lib.a:
 mm/mm.o:
 	(cd mm; make)
 
+fs/fs.o:
+	(cd fs; make)
+
 .PHONY : clean
 clean :
 	(cd Image; rm -vf *)
@@ -46,4 +49,5 @@ clean :
 	(cd kernel; make clean)
 	(cd lib; make clean)
 	(cd mm; make clean)
+	(cd fs; make clean)
 
