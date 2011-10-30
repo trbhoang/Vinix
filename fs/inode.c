@@ -1,3 +1,9 @@
+#include <string.h>
+#include <linux/sched.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <asm/system.h>
+
 
 
 void iput(struct m_inode *inode)

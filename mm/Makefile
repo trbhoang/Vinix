@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Werror -nostdinc -I ../include
+CFLAGS = -Wall -Werror -fno-builtin -nostdinc -I ../include
 
 .c.o:
 	$(CC) $(CFLAGS) -c -o $*.o $<

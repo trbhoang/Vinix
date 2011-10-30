@@ -3,7 +3,7 @@
 #
 
 CC = gcc
-CFLAGS  = -Wall -nostdinc -fno-stack-protector
+CFLAGS  = -Wall -nostdinc -fno-builtin -fno-stack-protector
 LD = ld
 LDFLAGS = -nostdlib -x -M -Ttext 0
 
