@@ -6,7 +6,7 @@ IMAGE_FILE = ../Image/floppy.img
 INC = ../include/boot
 
 CC = gcc
-CFLAGS  = -Wall -Werror -nostdinc -I $(INC)
+CFLAGS  = -Wall -Werror -nostdinc -fno-stack-protector -I $(INC)
 LDFLAGS = -nostdlib -Wl,-N,--oformat=binary -Ttext=0x0
 
 

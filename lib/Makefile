@@ -4,7 +4,7 @@
 
 AR = ar
 CC = gcc
-CFLAGS  = -Wall -Werror -fno-builtin -nostdinc -I ../include
+CFLAGS  = -Wall -Werror -fno-builtin -fno-stack-protector -nostdinc -I ../include
 LD = ld
 LDFLAGS = -nostdlib -x -M -Ttext 0
 
