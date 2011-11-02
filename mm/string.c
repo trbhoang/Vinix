@@ -1,5 +1,6 @@
 #include <string.h>
 
+char * ___strtok;
 extern char * strerror(int errno);
 
 /*
@@ -281,8 +282,6 @@ __asm__ __volatile__("cld\n\t"
 	:"memory");
 return __res;
 }
-
-extern char * ___strtok;
 
 char * strtok(char * s,const char * ct)
 {
