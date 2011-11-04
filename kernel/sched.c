@@ -103,6 +103,20 @@ void wake_up(struct task_struct **p)
   }
 }
 
+void sleep_on(struct task_struct **p)
+{
+  struct task_struct *tmp;
+
+  if (!p) return;
+  if (current == &(init_task.task))
+    panic("task[0] trying to sleep");
+  tmp = *p;
+  *p = current;
+  current->state = TASK_INTERRUPTIBLE;
+  schedule();
+  if (tmp) tmp->state = 0;
+}
+
 void interruptible_sleep_on(struct task_struct **p)
 {
   struct task_struct *tmp;

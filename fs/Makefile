@@ -6,7 +6,7 @@ CFLAGS = -Wall -Werror -fno-builtin -fno-stack-protector -nostdinc -I ../include
 .S.o:
 	$(CC) $(CFLAGS) -c -o $*.o $<
 
-OBJS = open.o inode.o
+OBJS = open.o inode.o truncate.o bitmap.o super.o
 
 all: fs.o 
 
