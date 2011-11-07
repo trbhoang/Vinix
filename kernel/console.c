@@ -31,7 +31,8 @@ extern void keyboard_interrupt(void);
 
 static unsigned long origin = SCREEN_START;
 static unsigned long scr_end = SCREEN_START + LINES*COLUMNS*2;
-static unsigned long lines = LINES, columns = COLUMNS;
+static unsigned long lines = LINES;
+unsigned long columns = COLUMNS;
 
 static unsigned long pos;
 static unsigned long x, y;
