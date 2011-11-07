@@ -3,7 +3,7 @@
 #
 
 CC = gcc
-CFLAGS = -Wall -Werror -fno-builtin -fno-stack-protector -nostdinc -I ../include
+CFLAGS = -Wall -Werror -O -fno-builtin -fno-stack-protector -nostdinc -I ../include
 
 .c.o:
 	$(CC) $(CFLAGS) -c -o $*.o $<

@@ -5,10 +5,15 @@
  */
 #include <linux/sched.h>
 #include <signal.h>
+#include <asm/system.h>
+#include <asm/io.h>
 
 
+#define LATCH (1193180 / HZ)
 
-#define PAGE_SIZE 4096
+extern int timer_interrupt(void);
+extern int system_call(void);
+
 
 long volatile jiffies = 0;
 long startup_time = 0;
@@ -136,4 +141,29 @@ void interruptible_sleep_on(struct task_struct **p)
   *p = NULL;
   if (tmp)
     tmp->state = 0;
+}
+
+void sched_init(void)
+{
+  int i;
+  struct desc_struct * p;
+
+  set_tss_desc(gdt + FIRST_TSS_ENTRY, &(init_task.task.tss));
+  set_ldt_desc(gdt + FIRST_LDT_ENTRY, &(init_task.task.ldt));
+  p = gdt + 2 + FIRST_TSS_ENTRY;
+  for (i = 1; i < NR_TASKS; i++) {
+    task[i] = NULL;
+    p->a = p->b = 0;
+    p++;
+    p->a = p->b = 0;
+    p++;
+  }
+  ltr(0);
+  lldt(0);
+  outb_p(0x36, 0x43);		/* binary, mode 3, LSB/MSB, ch 0 */
+  outb_p(LATCH & 0xff, 0x40); 	/* LSB */
+  outb(LATCH >> 8, 0x40); 	/* MSB */
+  set_intr_gate(0x20, &timer_interrupt);
+  outb(inb_p(0x21) & ~0x01, 0x21);
+  set_system_gate(0x80, &system_call);
 }

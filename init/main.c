@@ -74,7 +74,7 @@ int main(void)
   time_init();
   tty_init();
   trap_init();
-  
+  sched_init();
 
   /*
    * NOTE!!
