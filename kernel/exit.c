@@ -7,6 +7,7 @@
 #include <linux/tty.h>
 #include <asm/segment.h>
 
+int sys_pause(void);
 int sys_close(int fd);
 
 void release(struct task_struct *p)
@@ -58,6 +59,12 @@ void do_kill(long pid, long sig, int priv)
         send_sig(sig, *p, priv);
 }
 
+int sys_kill(int pid,int sig)
+{
+  do_kill(pid,sig,!(current->uid || current->euid));
+  return 0;
+}
+
 int do_exit(long code)
 {
   int i;
@@ -86,4 +93,45 @@ int do_exit(long code)
     release(current);
   schedule();
   return -1;                    /* just to suppress warnings */
+}
+
+int sys_exit(int error_code)
+{
+  return do_exit((error_code&0xff)<<8);
+}
+
+int sys_waitpid(pid_t pid,int * stat_addr, int options)
+{
+  int flag=0;
+  struct task_struct ** p;
+
+  verify_area(stat_addr,4);
+ repeat:
+  for(p = &LAST_TASK ; p > &FIRST_TASK ; --p)
+    if (*p && *p != current &&
+	(pid==-1 || (*p)->pid==pid ||
+	 (pid==0 && (*p)->pgrp==current->pgrp) ||
+	 (pid<0 && (*p)->pgrp==-pid)))
+      if ((*p)->father == current->pid) {
+	flag=1;
+	if ((*p)->state==TASK_ZOMBIE) {
+	  put_fs_long((*p)->exit_code,
+		      (unsigned long *) stat_addr);
+	  current->cutime += (*p)->utime;
+	  current->cstime += (*p)->stime;
+	  flag = (*p)->pid;
+	  release(*p);
+	  return flag;
+	}
+      }
+  if (flag) {
+    if (options & WNOHANG)
+      return 0;
+    sys_pause();
+    if (!(current->signal &= ~(1<<(SIGCHLD-1))))
+      goto repeat;
+    else
+      return -EINTR;
+  }
+  return -ECHILD;
 }

@@ -55,6 +55,10 @@ bad_sys_call:
 	movl	$-1, %eax
 	iret
 .align 2
+reschedule:
+	pushl	$ret_from_sys_call
+	jmp 	schedule
+.align 2
 system_call:
 	cmpl	$nr_system_calls - 1, %eax
 	ja	bad_sys_call

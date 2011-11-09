@@ -26,6 +26,21 @@ static inline void wait_on_buffer(struct buffer_head * bh)
   sti();
 }
 
+int sys_sync(void)
+{
+  int i;
+  struct buffer_head * bh;
+
+  sync_inodes();		/* write out inodes into buffers */
+  bh = start_buffer;
+  for (i=0 ; i<NR_BUFFERS ; i++,bh++) {
+    wait_on_buffer(bh);
+    if (bh->b_dirt)
+      ll_rw_block(WRITE,bh);
+  }
+  return 0;
+}
+
 static int sync_dev(int dev)
 {
   int i;

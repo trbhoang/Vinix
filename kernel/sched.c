@@ -4,7 +4,9 @@
  * call functions (type getpid(), which just extracts a field from current-task).
  */
 #include <linux/sched.h>
+#include <linux/kernel.h>
 #include <signal.h>
+#include <linux/sys.h>
 #include <asm/system.h>
 #include <asm/io.h>
 
@@ -108,6 +110,13 @@ void wake_up(struct task_struct **p)
   }
 }
 
+int sys_pause(void)
+{
+  current->state = TASK_INTERRUPTIBLE;
+  schedule();
+  return 0;
+}
+
 void sleep_on(struct task_struct **p)
 {
   struct task_struct *tmp;
@@ -143,6 +152,79 @@ void interruptible_sleep_on(struct task_struct **p)
     tmp->state = 0;
 }
 
+void do_timer(long cpl)
+{
+  if (cpl)
+    current->utime++;
+  else
+    current->stime++;
+  if ((--current->counter) > 0) return;
+  current->counter = 0;
+  if (!cpl) return;
+  schedule();
+}
+
+
+int sys_alarm(long seconds)
+{
+  current->alarm = (seconds>0)?(jiffies+HZ*seconds):0;
+  return seconds;
+}
+
+int sys_getpid(void)
+{
+  return current->pid;
+}
+
+int sys_getppid(void)
+{
+  return current->father;
+}
+
+int sys_getuid(void)
+{
+  return current->uid;
+}
+
+int sys_geteuid(void)
+{
+  return current->euid;
+}
+
+int sys_getgid(void)
+{
+  return current->gid;
+}
+
+int sys_getegid(void)
+{
+  return current->egid;
+}
+
+int sys_nice(long increment)
+{
+  if (current->priority-increment>0)
+    current->priority -= increment;
+  return 0;
+}
+
+int sys_signal(long signal,long addr,long restorer)
+{
+  long i;
+
+  switch (signal) {
+  case SIGHUP: case SIGINT: case SIGQUIT: case SIGILL:
+  case SIGTRAP: case SIGABRT: case SIGFPE: case SIGUSR1:
+  case SIGSEGV: case SIGUSR2: case SIGPIPE: case SIGALRM:
+  case SIGCHLD:
+    i=(long) current->sig_fn[signal-1];
+    current->sig_fn[signal-1] = (fn_ptr) addr;
+    current->sig_restorer = (fn_ptr) restorer;
+    return i;
+  default: return -1;
+  }
+}
+
 void sched_init(void)
 {
   int i;
@@ -167,3 +249,4 @@ void sched_init(void)
   outb(inb_p(0x21) & ~0x01, 0x21);
   set_system_gate(0x80, &system_call);
 }
+

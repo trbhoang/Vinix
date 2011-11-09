@@ -168,6 +168,11 @@ static void reset_hd(int nr)
   hd_out(nr, _SECT, _SECT, _HEAD - 1, _CYL, WIN_SPECIFY, &do_request);
 }
 
+void unexpected_hd_interrupt(void)
+{
+  panic("Unexpected HD interrupt\n\r");
+}
+
 static void bad_rw_intr(void)
 {
   int i = this_request->hd;
@@ -323,6 +328,39 @@ void rw_hd(int rw, struct buffer_head * bh)
   __asm__("divl %4":"=a" (cyl),"=d" (head):"0" (block),"1" (0),
 	  "r" (hd_info[dev].head));
   rw_abs_hd(rw, dev, sec+1, head, cyl, bh);
+}
+
+/* This may be used only once, enforced by 'static int callable' */
+int sys_setup(void)
+{
+  static int callable = 1;
+  int i,drive;
+  struct partition *p;
+
+  if (!callable)
+    return -1;
+  callable = 0;
+  for (drive=0 ; drive<NR_HD ; drive++) {
+    rw_abs_hd(READ,drive,1,0,0,(struct buffer_head *) start_buffer);
+    if (!start_buffer->b_uptodate) {
+      printk("Unable to read partition table of drive %d\n\r",
+	     drive);
+      panic("");
+    }
+    if (start_buffer->b_data[510] != 0x55 || (unsigned char)
+	start_buffer->b_data[511] != 0xAA) {
+      printk("Bad partition table on drive %d\n\r",drive);
+      panic("");
+    }
+    p = 0x1BE + (void *)start_buffer->b_data;
+    for (i=1;i<5;i++,p++) {
+      hd[i+5*drive].start_sect = p->start_sect;
+      hd[i+5*drive].nr_sects = p->nr_sects;
+    }
+  }
+  printk("Partition table%s ok.\n\r",(NR_HD>1)?"s":"");
+  mount_root();
+  return (0);
 }
 
 void rw_abs_hd(int rw, unsigned int nr, unsigned int sec, unsigned int head,

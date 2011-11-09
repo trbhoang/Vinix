@@ -122,6 +122,64 @@ int free_page_tables(unsigned long from, unsigned long size)
 
 
 /*
+ *  Well, here is one of the most complicated functions in mm. It
+ * copies a range of linerar addresses by copying only the pages.
+ * Let's hope this is bug-free, 'cause this one I don't want to debug :-)
+ *
+ * Note! We don't copy just any chunks of memory - addresses have to
+ * be divisible by 4Mb (one page-directory entry), as this makes the
+ * function easier. It's used only by fork anyway.
+ *
+ * NOTE 2!! When from==0 we are copying kernel space for the first
+ * fork(). Then we DONT want to copy a full page-directory entry, as
+ * that would lead to some serious memory waste - we just copy the
+ * first 160 pages - 640kB. Even that is more than we need, but it
+ * doesn't take any more memory - we don't copy-on-write in the low
+ * 1 Mb-range, so the pages can be shared with the kernel. Thus the
+ * special case for nr=xxxx.
+ */
+int copy_page_tables(unsigned long from,unsigned long to,long size)
+{
+  unsigned long * from_page_table;
+  unsigned long * to_page_table;
+  unsigned long this_page;
+  unsigned long * from_dir, * to_dir;
+  unsigned long nr;
+
+  if ((from&0x3fffff) || (to&0x3fffff))
+    panic("copy_page_tables called with wrong alignment");
+  from_dir = (unsigned long *) ((from>>20) & 0xffc); /* _pg_dir = 0 */
+  to_dir = (unsigned long *) ((to>>20) & 0xffc);
+  size = ((unsigned) (size+0x3fffff)) >> 22;
+  for( ; size-->0 ; from_dir++,to_dir++) {
+    if (1 & *to_dir)
+      panic("copy_page_tables: already exist");
+    if (!(1 & *from_dir))
+      continue;
+    from_page_table = (unsigned long *) (0xfffff000 & *from_dir);
+    if (!(to_page_table = (unsigned long *) get_free_page()))
+      return -1;	/* Out of memory, see freeing */
+    *to_dir = ((unsigned long) to_page_table) | 7;
+    nr = (from==0)?0xA0:1024;
+    for ( ; nr-- > 0 ; from_page_table++,to_page_table++) {
+      this_page = *from_page_table;
+      if (!(1 & this_page))
+	continue;
+      this_page &= ~2;
+      *to_page_table = this_page;
+      if (this_page > LOW_MEM) {
+	*from_page_table = this_page;
+	this_page -= LOW_MEM;
+	this_page >>= 12;
+	mem_map[this_page]++;
+      }
+    }
+  }
+  invalidate();
+  return 0;
+}
+
+/*
  * This function puts a page in memory at the wanted address.
  * It returns the physical address of the page gotten, 0 if
  * out of memory (either when trying to access page-table or
@@ -176,6 +234,18 @@ void do_wp_page(unsigned long error_code, unsigned long address)
   un_wp_page((unsigned long *) (((address >> 10) & 0xffc) + (0xfffff000 & *((unsigned long *) ((address >> 20) & 0xffc)))));
 }
 
+void write_verify(unsigned long address)
+{
+  unsigned long page;
+
+  if (!( (page = *((unsigned long *) ((address>>20) & 0xffc)) )&1))
+    return;
+  page &= 0xfffff000;
+  page += ((address>>10) & 0xffc);
+  if ((3 & *(unsigned long *) page) == 1)  /* non-writeable, present */
+    un_wp_page((unsigned long *) page);
+  return;
+}
 
 void do_no_page(unsigned long error_code, unsigned long address)
 {

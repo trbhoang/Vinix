@@ -108,6 +108,14 @@ void tty_intr(struct tty_struct *tty, int signal)
       task[i]->signal |= 1 << (signal - 1);
 }
 
+static void sleep_if_empty(struct tty_queue * queue)
+{
+  cli();
+  while (!current->signal && EMPTY(*queue))
+    interruptible_sleep_on(&queue->proc_list);
+  sti();
+}
+
 static void sleep_if_full(struct tty_queue *queue)
 {
   if (!FULL(*queue))
@@ -179,6 +187,68 @@ void copy_to_cooked(struct tty_struct *tty)
   }
   wake_up(&tty->secondary.proc_list);
 }
+
+int tty_read(unsigned channel, char * buf, int nr)
+{
+  struct tty_struct * tty;
+  char c, * b=buf;
+  int minimum,time,flag=0;
+  long oldalarm;
+
+  if (channel>2 || nr<0) return -1;
+  tty = &tty_table[channel];
+  oldalarm = current->alarm;
+  time = (unsigned) 10*tty->termios.c_cc[VTIME];
+  minimum = (unsigned) tty->termios.c_cc[VMIN];
+  if (time && !minimum) {
+    minimum=1;
+    if ((flag=(!oldalarm || time+jiffies<oldalarm)))
+      current->alarm = time+jiffies;
+  }
+  if (minimum>nr)
+    minimum=nr;
+  while (nr>0) {
+    if (flag && (current->signal & ALRMMASK)) {
+      current->signal &= ~ALRMMASK;
+      break;
+    }
+    if (current->signal)
+      break;
+    if (EMPTY(tty->secondary) || (L_CANON(tty) &&
+				  !tty->secondary.data && LEFT(tty->secondary)>20)) {
+      sleep_if_empty(&tty->secondary);
+      continue;
+    }
+    do {
+      GETCH(tty->secondary,c);
+      if (c==EOF_CHAR(tty) || c==10)
+	tty->secondary.data--;
+      if (c==EOF_CHAR(tty) && L_CANON(tty))
+	return (b-buf);
+      else {
+	put_fs_byte(c,b++);
+	if (!--nr)
+	  break;
+      }
+    } while (nr>0 && !EMPTY(tty->secondary));
+    if (time && !L_CANON(tty)) {
+      if ((flag=(!oldalarm || time+jiffies<oldalarm)))
+	current->alarm = time+jiffies;
+      else
+	current->alarm = oldalarm;
+    }
+    if (L_CANON(tty)) {
+      if (b-buf)
+	break;
+    } else if (b-buf >= minimum)
+      break;
+  }
+  current->alarm = oldalarm;
+  if (current->signal && !(b-buf))
+    return -EINTR;
+  return (b-buf);
+}
+
 
 int tty_write(unsigned channel, char *buf, int nr)
 {
