@@ -14,18 +14,30 @@
  * won't be any messing with the stack from main(), but we define
  * some others too.
  */
-
+static inline _syscall0(int, fork);
+static inline _syscall0(int, pause);
+static inline _syscall0(int, setup);
+static inline _syscall0(int, sync);
 
 #include <linux/tty.h>
 #include <linux/sched.h>
-
+#include <linux/head.h>
+#include <asm/system.h>
 #include <asm/io.h>
 
+#include <stddef.h>
+#include <stdarg.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/types.h>
 
-/* These will be defined by using _syscall0 macro which is defined in 'unistd.h' */
-// static inline _syscall0(int, pause)
+#include <linux/fs.h>
 
+static char printbuf[1024];
 
+extern int vsprintf();
+void init(void);
+extern void hd_init(void);
 extern long kernel_mktime(struct tm * tm);
 extern long startup_time;
 
@@ -76,7 +88,13 @@ int main(void)
   trap_init();
   sched_init();
   buffer_init();
-  
+  hd_init();
+  sti();
+  move_to_user_mode();
+  if (!fork()) {		/* we count on this going ok */
+    init();
+  }
+
   /*
    * NOTE!!
    * For any other task 'pause()' would mean we have to get a signal to awaken,
@@ -87,4 +105,46 @@ int main(void)
   // for(;;) pause();
 
   return 0;
+}
+
+static int printf(const char *fmt, ...)
+{
+  va_list args;
+  int i;
+
+  va_start(args, fmt);
+  write(1, printbuf, i = vsprintf(printbuf, fmt, args));
+  va_end(args);
+  return i;
+}
+
+static char * argv[] = { "/bin/sh",NULL };
+static char * envp[] = { "HOME=/root","PATH=/bin","PWD=/", NULL };
+
+void init(void)
+{
+  int i, j;
+
+  setup();
+  (void) open("/dev/tty0", O_RDWR, 0);
+  (void) dup(0);
+  (void) dup(0);
+  printf("%d buffers = %d bytes buffer space\n\r", NR_BUFFERS, NR_BUFFERS*BLOCK_SIZE);
+  printf("OK.\n\r");
+  if ((i = fork()) < 0)
+    printf("Fork failed in init\r\n");
+  else if (!i) {
+    close(0);
+    close(1);
+    close(2);
+    setsid();
+    (void) open("/dev/tty0", O_RDWR, 0);
+    (void) dup(0);
+    (void) dup(0);
+    _exit(execve("/bin/sh", argv, envp));
+  }
+  j = wait(&i);
+  printf("child %d died with code %04x\n", j, i);
+  sync();
+  _exit(0); 			/* NOTE! _exit, not exit() */
 }

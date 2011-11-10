@@ -68,6 +68,8 @@ __asm__("cld;rep;insw"::"d" (port),"D" (buf),"c" (nr)/*:"cx","di"*/)
 #define port_write(port,buf,nr) \
 __asm__("cld;rep;outsw"::"d" (port),"S" (buf),"c" (nr)/*:"cx","si"*/)
 
+extern void hd_interrupt(void);
+
 static struct task_struct * wait_for_request = NULL;
 
 static inline void unlock_buffer(struct buffer_head * bh)
@@ -390,4 +392,22 @@ void rw_abs_hd(int rw, unsigned int nr, unsigned int sec, unsigned int head,
   req->next = NULL;
   add_request(req);
   wait_on_buffer(bh);
+}
+
+void hd_init(void)
+{
+  int i;
+
+  for (i=0 ; i<NR_REQUEST ; i++) {
+    request[i].hd = -1;
+    request[i].next = NULL;
+  }
+  for (i=0 ; i<NR_HD ; i++) {
+    hd[i*5].start_sect = 0;
+    hd[i*5].nr_sects = hd_info[i].head*
+      hd_info[i].sect*hd_info[i].cyl;
+  }
+  set_trap_gate(0x2E,&hd_interrupt);
+  outb_p(inb_p(0x21)&0xfb,0x21);
+  outb(inb_p(0xA1)&0xbf,0xA1);
 }
