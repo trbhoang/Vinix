@@ -68,14 +68,15 @@ static void time_init(void)
   startup_time = kernel_mktime(&time);
 }
 
-int main(void)                  
+int main(void)
 {
   /* Interrupts are still disabled. Do necessary setups, then enable them. */
   time_init();
   tty_init();
   trap_init();
   sched_init();
-
+  buffer_init();
+  
   /*
    * NOTE!!
    * For any other task 'pause()' would mean we have to get a signal to awaken,
