@@ -1,3 +1,10 @@
+= INFO
+
+The purpose of this project is to learn how original Linux kernel (0.01) was implemented.
+That would be great to understand kernel internal.
+Most of code was extracted from source code of Linux kernel 0.01 and rebuilt to run on a simulator. 
+
+
 = TODO
 
 1. Learn how to create a floppy image file formatted as FAT12 (or whatever file system) on Linux
